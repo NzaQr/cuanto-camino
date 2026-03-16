@@ -27,10 +27,17 @@ export interface FoundRoute {
   shape: [number, number][];
 }
 
+export interface RouteSuggestion {
+  count: number;
+  originRadius: number;
+  destRadius: number;
+}
+
 export interface RouteSearchResult {
   routes: FoundRoute[];
   originStops: Stop[];
   destStops: Stop[];
+  suggestion: RouteSuggestion | null;
 }
 
 export interface Place {

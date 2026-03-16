@@ -1,7 +1,16 @@
-import React from 'react';
-import PlaceInput from './PlaceInput.tsx';
-import type { Place } from '../types.ts';
-import './SearchPanel.css';
+import React from "react";
+import {
+  Bus,
+  ChevronUp,
+  ChevronDown,
+  AlertTriangle,
+  SearchX,
+  CheckCircle2,
+  Footprints,
+} from "lucide-react";
+import type { Place, RouteSuggestion } from "../types.ts";
+import "./SearchPanel.css";
+import PlaceInput from "./PlaceInput.tsx";
 
 const WALK_MIN = 100;
 const WALK_MAX = 2000;
@@ -26,6 +35,8 @@ interface SearchPanelProps {
   routeCount: number | null;
   panelOpen: boolean;
   onTogglePanel: () => void;
+  suggestion: RouteSuggestion | null;
+  onApplySuggestion: () => void;
 }
 
 function SearchPanel({
@@ -48,6 +59,8 @@ function SearchPanel({
   routeCount,
   panelOpen,
   onTogglePanel,
+  suggestion,
+  onApplySuggestion,
 }: SearchPanelProps) {
   const canSearch = Boolean(originName && destName && !loading);
 
@@ -58,29 +71,36 @@ function SearchPanel({
 
   return (
     <div className="search-panel">
-      <div className="panel-header">
-        <span className="panel-icon">🚌</span>
+      <div
+        className="panel-header"
+        role="button"
+        tabIndex={0}
+        onClick={onTogglePanel}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onTogglePanel();
+          }
+        }}
+        aria-label={panelOpen ? "Cerrar menú" : "Abrir menú"}
+      >
+        <div className="panel-icon">
+          <Bus size={20} />
+        </div>
         <div>
           <h1 className="panel-title">Cuánto Camino</h1>
           <p className="panel-subtitle">Encontrá tu línea</p>
         </div>
-        <button
-          type="button"
-          className="panel-toggle-btn"
-          onClick={onTogglePanel}
-          aria-label={panelOpen ? "Cerrar menú" : "Abrir menú"}
-        >
-          <span className={`panel-toggle-chevron${panelOpen ? " open" : ""}`}>
-            ▲
-          </span>
-        </button>
+        <span className="panel-toggle-chevron">
+          {panelOpen ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+        </span>
       </div>
 
       <form className="panel-body" onSubmit={handleSubmit}>
         <div className="points-card">
           <PlaceInput
             label="Origen"
-            color="#1e8e3e"
+            color="var(--color-origin)"
             value={originName}
             placeholder="Buscar dirección de origen..."
             onSelect={onSetOrigin}
@@ -89,7 +109,7 @@ function SearchPanel({
           <div className="divider-line" />
           <PlaceInput
             label="Destino"
-            color="#d93025"
+            color="var(--color-destination)"
             value={destName}
             placeholder="Buscar dirección de destino..."
             onSelect={onSetDest}
@@ -189,21 +209,48 @@ function SearchPanel({
 
       {error ? (
         <div className="feedback error">
-          <span>⚠️</span> {error}
+          <AlertTriangle size={14} className="feedback-icon" />
+          <span>{error}</span>
         </div>
       ) : null}
 
       {routeCount !== null && !loading && !error ? (
         <div className={`feedback ${routeCount === 0 ? "warning" : "success"}`}>
           {routeCount === 0 ? (
-            <>
-              <span>🔍</span> No se encontraron rutas directas. Probá aumentar
-              el radio de caminata.
-            </>
+            <div className="feedback-content-vertical">
+              <div className="feedback-message-row">
+                <SearchX size={14} className="feedback-icon" />
+                <span>Ninguna línea directa en esta zona.</span>
+              </div>
+              {suggestion ? (
+                <button
+                  type="button"
+                  className="suggestion-btn"
+                  onClick={onApplySuggestion}
+                >
+                  <Footprints size={12} className="suggestion-icon" />
+                  <span>
+                    Ver {suggestion.count}{" "}
+                    {suggestion.count === 1 ? "línea" : "líneas"} caminando{" "}
+                    {linkedRadius
+                      ? `${suggestion.originRadius}m`
+                      : `${suggestion.originRadius}m / ${suggestion.destRadius}m`}
+                  </span>
+                </button>
+              ) : null}
+            </div>
           ) : (
             <>
-              <span>✅</span> Se encontraron <strong>{routeCount}</strong> línea
-              {routeCount !== 1 ? "s" : ""}.
+              <CheckCircle2 size={14} className="feedback-icon" />
+              <span>
+                {routeCount === 1 ? (
+                  "Se encontró 1 línea."
+                ) : (
+                  <>
+                    Se encontraron <strong>{routeCount}</strong> líneas.
+                  </>
+                )}
+              </span>
             </>
           )}
         </div>

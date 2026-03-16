@@ -142,6 +142,7 @@ function App() {
     routes,
     originStops: _originStops,
     destStops: _destStops,
+    suggestion,
     loading,
     error,
     reset: resetSearch,
@@ -188,6 +189,25 @@ function App() {
 
   const routeCount = routes !== null ? routes.length : null;
 
+  const handleApplySuggestion = useCallback(() => {
+    if (!suggestion) return;
+    // Update radii to the suggested values
+    dispatch({ type: 'SET_ORIGIN_RADIUS', value: suggestion.originRadius });
+    if (!linkedRadius) {
+      dispatch({ type: 'SET_DEST_RADIUS', value: suggestion.destRadius });
+    }
+    // Trigger a new search with the new radii
+    if (origin && destination) {
+      dispatch({ type: 'CLEAR_SELECTED_LINE' });
+      search({
+        origin,
+        destination,
+        originRadius: suggestion.originRadius,
+        destRadius: linkedRadius ? suggestion.originRadius : suggestion.destRadius,
+      });
+    }
+  }, [suggestion, linkedRadius, origin, destination, search]);
+
   const handleSelectLine = useCallback((line: string | null) => {
     dispatch({ type: 'SELECT_LINE', line });
   }, []);
@@ -227,6 +247,8 @@ function App() {
           loading={loading}
           error={error}
           routeCount={routeCount}
+          suggestion={suggestion}
+          onApplySuggestion={handleApplySuggestion}
         />
 
         {routes && routes.length > 0 ? (

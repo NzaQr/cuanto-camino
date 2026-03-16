@@ -56,6 +56,71 @@ export function createRouting(db) {
     );
   }
 
+  // COUNT-only query for suggestion logic - accepts pre-resolved stop arrays
+  function countRoutesForStops(originStops, destStops) {
+    const originIds = originStops.map((s) => s.stop_id);
+    const destIds = destStops.map((s) => s.stop_id);
+
+    const oPlaceholders = originIds.map(() => "?").join(",");
+    const dPlaceholders = destIds.map(() => "?").join(",");
+
+    const sql = `
+      SELECT COUNT(DISTINCT r.route_short_name) as count
+      FROM route_stops rs_o
+      JOIN route_stops rs_d
+        ON rs_o.route_id = rs_d.route_id
+        AND rs_o.direction_id = rs_d.direction_id
+        AND rs_d.stop_sequence > rs_o.stop_sequence
+      JOIN routes r ON rs_o.route_id = r.route_id
+      WHERE rs_o.stop_id IN (${oPlaceholders})
+        AND rs_d.stop_id IN (${dPlaceholders})
+    `;
+
+    const result = db.prepare(sql).get(...originIds, ...destIds);
+    return result?.count || 0;
+  }
+
+  // Find minimum radius with routes by incrementing 25% each step.
+  // Fetches stops at MAX_RADIUS once and filters in memory each iteration
+  // to avoid repeated bbox queries against SQLite.
+  function findSuggestionRadius(origin, destination, initialOriginRadius, initialDestRadius) {
+    const MAX_RADIUS = 2000;
+    const INCREMENT = 1.25; // 25% increase
+
+    // Fetch all candidate stops once at the maximum possible radius and
+    // pre-compute each stop's distance so the loop only does comparisons.
+    const allOriginStops = findStopsNear(origin.lat, origin.lng, MAX_RADIUS)
+      .map((s) => ({ ...s, dist: haversineMeters(origin.lat, origin.lng, s.stop_lat, s.stop_lon) }));
+    const allDestStops = findStopsNear(destination.lat, destination.lng, MAX_RADIUS)
+      .map((s) => ({ ...s, dist: haversineMeters(destination.lat, destination.lng, s.stop_lat, s.stop_lon) }));
+
+    if (!allOriginStops.length || !allDestStops.length) return null;
+
+    let testOriginR = Math.round(initialOriginRadius * INCREMENT);
+    let testDestR = Math.round(initialDestRadius * INCREMENT);
+
+    while (testOriginR <= MAX_RADIUS || testDestR <= MAX_RADIUS) {
+      const oR = Math.min(testOriginR, MAX_RADIUS);
+      const dR = Math.min(testDestR, MAX_RADIUS);
+
+      // Filter in memory using pre-computed distances — no SQLite bbox query
+      const oStops = allOriginStops.filter((s) => s.dist <= oR);
+      const dStops = allDestStops.filter((s) => s.dist <= dR);
+
+      if (oStops.length && dStops.length) {
+        const count = countRoutesForStops(oStops, dStops);
+        if (count > 0) return { count, originRadius: oR, destRadius: dR };
+      }
+
+      testOriginR = Math.round(testOriginR * INCREMENT);
+      testDestR = Math.round(testDestR * INCREMENT);
+
+      if (testOriginR > MAX_RADIUS && testDestR > MAX_RADIUS) break;
+    }
+
+    return null;
+  }
+
   function findRoutes(origin, destination, originRadius, destRadius) {
     const originStops = findStopsNear(origin.lat, origin.lng, originRadius);
     const destStops = findStopsNear(
@@ -65,7 +130,9 @@ export function createRouting(db) {
     );
 
     if (!originStops.length || !destStops.length) {
-      return { routes: [], originStops, destStops };
+      // Try to find a suggestion even when no stops in range
+      const suggestion = findSuggestionRadius(origin, destination, originRadius, destRadius);
+      return { routes: [], originStops, destStops, suggestion };
     }
 
     const originIds = originStops.map((s) => s.stop_id);
@@ -98,7 +165,9 @@ export function createRouting(db) {
     const rows = db.prepare(sql).all(...originIds, ...destIds);
 
     if (!rows.length) {
-      return { routes: [], originStops, destStops };
+      // No routes at current radius - find suggestion with larger radius
+      const suggestion = findSuggestionRadius(origin, destination, originRadius, destRadius);
+      return { routes: [], originStops, destStops, suggestion };
     }
 
     const byLine = new Map();
@@ -172,7 +241,8 @@ export function createRouting(db) {
         (b.boardStop.walkMeters + b.alightStop.walkMeters),
     );
 
-    return { routes, originStops, destStops };
+    // Routes found - no need for suggestion
+    return { routes, originStops, destStops, suggestion: null };
   }
 
   function getStopsInBbox(south, west, north, east) {

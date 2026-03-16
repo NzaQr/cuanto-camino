@@ -1,5 +1,6 @@
 import React, { useReducer, useEffect, useRef, useCallback, useId, useState } from 'react';
 import ReactDOM from 'react-dom';
+import { MapPin, X } from 'lucide-react';
 import type { Place } from '../types.ts';
 import './PlaceInput.css';
 
@@ -151,7 +152,7 @@ function Dropdown({ anchorRef, suggestions, activeIndex, listboxId, optionIdPref
             onSelect(result);
           }}
         >
-          <span className="suggestion-icon">📍</span>
+          <MapPin size={12} className="suggestion-icon" />
           <span className="suggestion-text">{result.display_name}</span>
         </li>
       ))}
@@ -182,12 +183,18 @@ function PlaceInput({ label, color, value, placeholder, onSelect, onClear }: Pla
 
   const wrapperRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const isSyncingRef = useRef(false);
 
   useEffect(() => {
+    isSyncingRef.current = true;
     dispatch({ type: 'SYNC_VALUE', value });
   }, [value]);
 
   useEffect(() => {
+    if (isSyncingRef.current) {
+      isSyncingRef.current = false;
+      return;
+    }
     if (query === value) return;
     if (query.length < 3) {
       dispatch({ type: 'SEARCH_FAIL' });
@@ -300,7 +307,7 @@ function PlaceInput({ label, color, value, placeholder, onSelect, onClear }: Pla
                 tabIndex={-1}
                 aria-label="Limpiar"
               >
-                ×
+                <X size={12} />
               </button>
             ) : null}
           </div>

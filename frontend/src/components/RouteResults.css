@@ -1,5 +1,6 @@
 .route-results {
   border-top: 1px solid var(--color-border-light);
+  overflow-x: hidden;
 }
 
 .results-header {
@@ -41,19 +42,22 @@
   text-align: left;
   width: 100%;
   border-radius: 0;
-  transition: background 0.1s;
+  border-left: 3px solid transparent;
+  transition: background var(--transition-fast), transform var(--transition-fast), border-color var(--transition-fast);
 }
 
 .route-card:hover {
   background: var(--color-surface-2);
+  transform: translateX(2px);
 }
 
 .route-card.selected {
   background: var(--color-primary-light);
   border-left: 3px solid var(--color-primary);
-  padding-left: calc(var(--space-md) - 3px);
+  transform: translateX(0);
 }
 
+/* Route line badge */
 .route-line-badge {
   min-width: 44px;
   height: 44px;
@@ -62,11 +66,12 @@
   justify-content: center;
   background: var(--color-primary);
   color: white;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 800;
-  border-radius: var(--radius-sm);
+  border-radius: var(--radius-md);
   flex-shrink: 0;
   letter-spacing: -0.5px;
+  box-shadow: 0 2px 6px rgba(37, 99, 235, 0.35);
 }
 
 .route-card.selected .route-line-badge {
@@ -110,8 +115,8 @@
   flex-shrink: 0;
 }
 
-.stop-dot.origin { background: #1e8e3e; }
-.stop-dot.dest   { background: #d93025; }
+.stop-dot.origin { background: var(--color-origin); }
+.stop-dot.dest   { background: var(--color-destination); }
 
 .stop-name {
   font-size: 12px;
@@ -148,12 +153,15 @@
 }
 
 .walk-icon {
-  font-size: 11px;
+  flex-shrink: 0;
+  color: var(--color-text-muted);
 }
 
 /* Chevron */
 .route-chevron {
-  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   color: var(--color-text-muted);
   flex-shrink: 0;
   margin-top: 14px;

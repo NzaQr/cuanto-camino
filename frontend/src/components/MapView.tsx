@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 import {
   MapContainer,
   TileLayer,
@@ -9,10 +9,22 @@ import {
   CircleMarker,
   useMapEvents,
   useMap,
-} from 'react-leaflet';
-import L from 'leaflet';
-import markerShadow from 'leaflet/dist/images/marker-shadow.png';
-import type { LatLng, FoundRoute } from '../types.ts';
+} from "react-leaflet";
+import L from "leaflet";
+
+function ZoomControlToTopRight() {
+  const map = useMap();
+  React.useEffect(() => {
+    const zoomControl = L.control.zoom({ position: "topright" });
+    zoomControl.addTo(map);
+    return () => {
+      map.removeControl(zoomControl);
+    };
+  }, [map]);
+  return null;
+}
+import markerShadow from "leaflet/dist/images/marker-shadow.png";
+import type { LatLng, FoundRoute } from "../types.ts";
 
 const BA_CENTER: [number, number] = [-34.6037, -58.3816];
 const ZOOM = 13;
@@ -33,8 +45,8 @@ function createColoredIcon(color: string): L.Icon {
   });
 }
 
-const originIcon = createColoredIcon('#1e8e3e');
-const destIcon = createColoredIcon('#d93025');
+const originIcon = createColoredIcon("#0d9488");
+const destIcon = createColoredIcon("#d97706");
 
 interface ClickHandlerProps {
   onMapClick: (latlng: LatLng) => void;
@@ -91,7 +103,7 @@ function RoutePolylines({ routes, selectedLine }: RoutePolylinesProps) {
     <Polyline
       key={selected.line}
       positions={selected.shape}
-      pathOptions={{ color: '#1a73e8', weight: 5, opacity: 0.9 }}
+      pathOptions={{ color: "#1a73e8", weight: 5, opacity: 0.9 }}
     />
   );
 }
@@ -117,7 +129,7 @@ function MapView({
 }: MapViewProps) {
   const hasRoutes = routes && routes.length > 0;
   const selectedRoute = hasRoutes
-    ? routes.find((r) => r.line === selectedLine) ?? null
+    ? (routes.find((r) => r.line === selectedLine) ?? null)
     : null;
 
   const foundBoardStops = hasRoutes
@@ -131,9 +143,10 @@ function MapView({
     <MapContainer
       center={BA_CENTER}
       zoom={ZOOM}
-      style={{ width: '100%', height: '100%' }}
-      zoomControl={true}
+      style={{ width: "100%", height: "100%" }}
+      zoomControl={false}
     >
+      <ZoomControlToTopRight />
       <TileLayer
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
@@ -158,8 +171,8 @@ function MapView({
             center={[origin.lat, origin.lng]}
             radius={originRadius}
             pathOptions={{
-              color: '#1e8e3e',
-              fillColor: '#1e8e3e',
+              color: "#0d9488",
+              fillColor: "#0d9488",
               fillOpacity: 0.07,
               weight: 1.5,
             }}
@@ -180,8 +193,8 @@ function MapView({
             center={[destination.lat, destination.lng]}
             radius={destRadius}
             pathOptions={{
-              color: '#d93025',
-              fillColor: '#d93025',
+              color: "#d97706",
+              fillColor: "#d97706",
               fillOpacity: 0.07,
               weight: 1.5,
             }}
@@ -199,8 +212,8 @@ function MapView({
           center={[s.lat, s.lng]}
           radius={4}
           pathOptions={{
-            color: '#1e8e3e',
-            fillColor: '#1e8e3e',
+            color: "#0d9488",
+            fillColor: "#0d9488",
             fillOpacity: 0.7,
             weight: 1,
           }}
@@ -219,8 +232,8 @@ function MapView({
           center={[s.lat, s.lng]}
           radius={4}
           pathOptions={{
-            color: '#d93025',
-            fillColor: '#d93025',
+            color: "#d97706",
+            fillColor: "#d97706",
             fillOpacity: 0.7,
             weight: 1,
           }}
@@ -239,8 +252,8 @@ function MapView({
             center={[selectedRoute.boardStop.lat, selectedRoute.boardStop.lng]}
             radius={8}
             pathOptions={{
-              color: '#1a73e8',
-              fillColor: '#ffffff',
+              color: "#1a73e8",
+              fillColor: "#ffffff",
               fillOpacity: 1,
               weight: 3,
             }}
@@ -262,8 +275,8 @@ function MapView({
             ]}
             radius={8}
             pathOptions={{
-              color: '#1a73e8',
-              fillColor: '#ffffff',
+              color: "#1a73e8",
+              fillColor: "#ffffff",
               fillOpacity: 1,
               weight: 3,
             }}
