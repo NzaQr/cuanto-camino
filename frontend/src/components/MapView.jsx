@@ -55,7 +55,10 @@ function FitBounds({ origin, destination, selectedRoute }) {
           [origin.lat, origin.lng],
           [destination.lat, destination.lng],
         ],
-        { padding: [80, Math.min(window.innerWidth * 0.45, 460)], maxZoom: 13 },
+        {
+          padding: [40, 60],
+          maxZoom: 17,
+        },
       );
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
