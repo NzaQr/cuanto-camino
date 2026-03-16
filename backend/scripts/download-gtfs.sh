@@ -11,19 +11,21 @@ mkdir -p "$GTFS_DIR"
 
 echo "=== Downloading GTFS data ==="
 
+CURL_OPTS="--progress-bar --max-time 600 -L -o $ZIP_FILE"
+
 if [[ -n "$BA_CLIENT_ID" && -n "$BA_CLIENT_SECRET" ]]; then
   API_URL="https://apitransporte.buenosaires.gob.ar/colectivos/feed-gtfs?client_id=$BA_CLIENT_ID&client_secret=$BA_CLIENT_SECRET"
   echo "Using BA Transport API..."
-  if curl -fsSL -o "$ZIP_FILE" "$API_URL"; then
+  if curl $CURL_OPTS "$API_URL"; then
     echo "Downloaded from API"
   else
     echo "API download failed, trying public data portal..."
     rm -f "$ZIP_FILE"
-    curl -fsSL -o "$ZIP_FILE" "https://data.buenosaires.gob.ar/dataset/colectivos-gtfs/resource/juqdkmgo-571-resource/download"
+    curl $CURL_OPTS "https://data.buenosaires.gob.ar/dataset/colectivos-gtfs/resource/juqdkmgo-571-resource/download"
   fi
 else
   echo "Using Buenos Aires Data portal (no credentials)..."
-  curl -fsSL -o "$ZIP_FILE" "https://data.buenosaires.gob.ar/dataset/colectivos-gtfs/resource/juqdkmgo-571-resource/download"
+  curl $CURL_OPTS "https://data.buenosaires.gob.ar/dataset/colectivos-gtfs/resource/juqdkmgo-571-resource/download"
 fi
 
 echo "Extracting to $GTFS_DIR..."
