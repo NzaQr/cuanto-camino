@@ -1,7 +1,14 @@
 import React, { memo } from 'react';
+import type { FoundRoute } from '../types.ts';
 import './RouteResults.css';
 
-const RouteCard = memo(function RouteCard({ route, isSelected, onSelect }) {
+interface RouteCardProps {
+  route: FoundRoute;
+  isSelected: boolean;
+  onSelect: (line: string | null) => void;
+}
+
+const RouteCard = memo(function RouteCard({ route, isSelected, onSelect }: RouteCardProps) {
   return (
     <button
       className={`route-card ${isSelected ? 'selected' : ''}`}
@@ -41,7 +48,13 @@ const RouteCard = memo(function RouteCard({ route, isSelected, onSelect }) {
   );
 });
 
-function RouteResults({ routes, selectedLine, onSelectLine }) {
+interface RouteResultsProps {
+  routes: FoundRoute[];
+  selectedLine: string | null;
+  onSelectLine: (line: string | null) => void;
+}
+
+function RouteResults({ routes, selectedLine, onSelectLine }: RouteResultsProps) {
   return (
     <div className="route-results">
       <div className="results-header">

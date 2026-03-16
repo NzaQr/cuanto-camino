@@ -136,7 +136,8 @@
   border-bottom: none;
 }
 
-.place-suggestion:hover {
+.place-suggestion:hover,
+.place-suggestion.active {
   background: var(--color-primary-light);
 }
 
