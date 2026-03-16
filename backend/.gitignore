@@ -1,0 +1,2 @@
+# Hereda de .gitignore raíz. Backend-specific:
+gtfs.db
