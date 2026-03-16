@@ -1,4 +1,4 @@
-import React, { useState, useCallback, lazy, Suspense } from "react";
+import React, { useState, useCallback, useEffect, useRef, lazy, Suspense } from "react";
 import MapView from "./components/MapView.jsx";
 import SearchPanel from "./components/SearchPanel.jsx";
 import { useRouteSearch } from "./hooks/useRouteSearch.js";
@@ -19,6 +19,14 @@ function App() {
   const [destRadius, setDestRadius] = useState(600);
   const [linkedRadius, setLinkedRadius] = useState(true);
   const [selectedLine, setSelectedLine] = useState(null);
+  const [panelOpen, setPanelOpen] = useState(true);
+  const panelRef = useRef(null);
+
+  useEffect(() => {
+    if (!panelOpen && panelRef.current) {
+      panelRef.current.scrollTop = 0;
+    }
+  }, [panelOpen]);
 
   const handleOriginRadiusChange = useCallback(
     (value) => {
@@ -34,6 +42,14 @@ function App() {
       if (linkedRadius) setOriginRadius(value);
     },
     [linkedRadius],
+  );
+
+  const handleLinkedRadiusChange = useCallback(
+    (checked) => {
+      setLinkedRadius(checked);
+      if (checked) setDestRadius(originRadius);
+    },
+    [originRadius],
   );
 
   const {
@@ -112,6 +128,11 @@ function App() {
 
   const routeCount = routes !== null ? routes.length : null;
 
+  const handleSelectLine = useCallback((line) => {
+    setSelectedLine(line);
+    setPanelOpen(false);
+  }, []);
+
   return (
     <div className="app">
       <div className="map-container">
@@ -126,8 +147,10 @@ function App() {
         />
       </div>
 
-      <div className="panel-container">
+      <div ref={panelRef} className={`panel-container${panelOpen ? " panel-open" : ""}`}>
         <SearchPanel
+          panelOpen={panelOpen}
+          onTogglePanel={() => setPanelOpen((v) => !v)}
           originName={originName}
           destName={destName}
           originRadius={originRadius}
@@ -139,7 +162,7 @@ function App() {
           onClearDest={handleClearDest}
           onOriginRadiusChange={handleOriginRadiusChange}
           onDestRadiusChange={handleDestRadiusChange}
-          onLinkedRadiusChange={setLinkedRadius}
+          onLinkedRadiusChange={handleLinkedRadiusChange}
           onSearch={handleSearch}
           onReset={handleReset}
           loading={loading}
@@ -152,7 +175,7 @@ function App() {
             <RouteResults
               routes={routes}
               selectedLine={selectedLine}
-              onSelectLine={setSelectedLine}
+              onSelectLine={handleSelectLine}
             />
           </Suspense>
         ) : null}

@@ -23,6 +23,8 @@ function SearchPanel({
   loading,
   error,
   routeCount,
+  panelOpen,
+  onTogglePanel,
 }) {
   const canSearch = Boolean(originName && destName && !loading);
 
@@ -39,6 +41,16 @@ function SearchPanel({
           <h1 className="panel-title">Cuánto Camino</h1>
           <p className="panel-subtitle">Encontrá tu línea</p>
         </div>
+        <button
+          type="button"
+          className="panel-toggle-btn"
+          onClick={onTogglePanel}
+          aria-label={panelOpen ? "Cerrar menú" : "Abrir menú"}
+        >
+          <span className={`panel-toggle-chevron${panelOpen ? " open" : ""}`}>
+            ▲
+          </span>
+        </button>
       </div>
 
       <form className="panel-body" onSubmit={handleSubmit}>

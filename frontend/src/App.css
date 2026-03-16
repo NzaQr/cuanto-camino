@@ -2,6 +2,7 @@
   position: relative;
   width: 100vw;
   height: 100vh;
+  height: 100dvh;
   overflow: hidden;
 }
 
@@ -58,14 +59,31 @@
 
 /* Responsive: on small screens the panel goes to the bottom */
 @media (max-width: 640px) {
+  .map-hint {
+    display: none;
+  }
+
   .panel-container {
     top: auto;
     bottom: 0;
     left: 0;
     right: 0;
     width: 100%;
-    max-height: 50vh;
     border-radius: var(--radius-md) var(--radius-md) 0 0;
     box-shadow: 0 -4px 24px rgba(60, 64, 67, 0.2);
+    /* Height is controlled by panel-open/closed state */
+    max-height: calc(56px + env(safe-area-inset-bottom, 0px));
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+  }
+
+  .panel-container.panel-open {
+    /* dvh accounts for Safari's collapsible address/tab bar; vh fallback for older browsers */
+    max-height: 85vh;
+    max-height: 85dvh;
+    overflow-y: auto;
+    /* Keep content above the home indicator on notched iPhones */
+    padding-bottom: env(safe-area-inset-bottom, 0px);
   }
 }

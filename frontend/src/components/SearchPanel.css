@@ -229,6 +229,66 @@
   to { transform: rotate(360deg); }
 }
 
+/* Mobile toggle button — hidden on desktop */
+.panel-toggle-btn {
+  display: none;
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--color-text-secondary);
+  padding: 4px 6px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  border-radius: var(--radius-sm);
+}
+
+.panel-toggle-chevron {
+  display: inline-block;
+  transition: transform 0.25s ease;
+  transform: rotate(180deg);
+}
+
+.panel-toggle-chevron.open {
+  transform: rotate(0deg);
+}
+
+@media (max-width: 640px) {
+  .panel-toggle-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Let the outer .panel-container handle scrolling; disable inner scroll */
+  .search-panel {
+    overflow: visible;
+    max-height: none;
+  }
+
+  .map-tip {
+    display: none;
+  }
+
+  .panel-body {
+    gap: var(--space-sm);
+    padding: var(--space-sm) var(--space-sm) var(--space-md);
+  }
+
+  .radius-section {
+    gap: var(--space-sm);
+  }
+
+  .action-row {
+    position: sticky;
+    bottom: 0;
+    background: var(--color-surface);
+    padding: var(--space-sm) var(--space-sm) var(--space-xs);
+    margin-top: var(--space-xs);
+    border-top: 1px solid var(--color-border-light);
+  }
+}
+
 /* Feedback */
 .feedback {
   display: flex;
