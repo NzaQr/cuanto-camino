@@ -71,28 +71,26 @@ export function createRouting(db) {
     const originIds = originStops.map((s) => s.stop_id);
     const destIds = destStops.map((s) => s.stop_id);
 
-    // Build parameterized placeholders
     const oPlaceholders = originIds.map(() => "?").join(",");
     const dPlaceholders = destIds.map(() => "?").join(",");
 
     const sql = `
       SELECT
-        r.route_id,
         r.route_short_name AS line,
         r.route_long_name,
         r.route_desc,
-        t.shape_id,
-        t.trip_id,
-        st_o.stop_id AS board_stop_id,
-        st_d.stop_id AS alight_stop_id
-      FROM stop_times st_o
-      JOIN stop_times st_d
-        ON st_o.trip_id = st_d.trip_id
-        AND st_d.stop_sequence > st_o.stop_sequence
-      JOIN trips t ON st_o.trip_id = t.trip_id
-      JOIN routes r ON t.route_id = r.route_id
-      WHERE st_o.stop_id IN (${oPlaceholders})
-        AND st_d.stop_id IN (${dPlaceholders})
+        rs_o.shape_id,
+        rs_o.trip_id,
+        rs_o.stop_id  AS board_stop_id,
+        rs_d.stop_id  AS alight_stop_id
+      FROM route_stops rs_o
+      JOIN route_stops rs_d
+        ON rs_o.route_id = rs_d.route_id
+        AND rs_o.direction_id = rs_d.direction_id
+        AND rs_d.stop_sequence > rs_o.stop_sequence
+      JOIN routes r ON rs_o.route_id = r.route_id
+      WHERE rs_o.stop_id IN (${oPlaceholders})
+        AND rs_d.stop_id IN (${dPlaceholders})
       GROUP BY r.route_short_name
       LIMIT 300
     `;
@@ -103,7 +101,6 @@ export function createRouting(db) {
       return { routes: [], originStops, destStops };
     }
 
-    // Group by bus line (route_short_name), keep one representative per line
     const byLine = new Map();
     for (const row of rows) {
       if (!byLine.has(row.line)) {
@@ -111,7 +108,6 @@ export function createRouting(db) {
       }
     }
 
-    // Build stop lookup maps
     const originStopMap = new Map(originStops.map((s) => [s.stop_id, s]));
     const destStopMap = new Map(destStops.map((s) => [s.stop_id, s]));
 
@@ -169,7 +165,6 @@ export function createRouting(db) {
       });
     }
 
-    // Sort by total walk distance
     routes.sort(
       (a, b) =>
         a.boardStop.walkMeters +

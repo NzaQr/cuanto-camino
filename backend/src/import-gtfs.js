@@ -101,22 +101,40 @@ async function importTrips(db) {
   console.log(`\n  Done: ${count.toLocaleString()} trips`);
 }
 
-async function importStopTimes(db) {
-  console.log('\nImporting stop_times (this will take several minutes)...');
+async function importRouteStops(db) {
+  console.log('\nBuilding route_stops (one representative trip per route+direction)...');
+
+  const repTrips = db.prepare(`
+    SELECT MIN(t.trip_id) AS trip_id, t.route_id, t.direction_id, t.shape_id
+    FROM trips t
+    GROUP BY t.route_id, t.direction_id
+  `).all();
+
+  const repTripSet = new Set(repTrips.map((r) => r.trip_id));
+  const tripMeta = new Map(repTrips.map((r) => [r.trip_id, r]));
+
+  console.log(`  ${repTrips.length} representative trips selected`);
+
   const insert = db.prepare(
-    'INSERT INTO stop_times (trip_id, stop_id, stop_sequence) VALUES (?, ?, ?)'
+    'INSERT INTO route_stops (route_id, direction_id, stop_id, stop_sequence, trip_id, shape_id) VALUES (?, ?, ?, ?, ?, ?)'
   );
   const insertMany = db.transaction((rows) => {
-    for (const r of rows) insert.run(r.trip_id, r.stop_id, Number(r.stop_sequence));
+    for (const r of rows) {
+      const meta = tripMeta.get(r.trip_id);
+      insert.run(meta.route_id, meta.direction_id, r.stop_id, Number(r.stop_sequence), r.trip_id, meta.shape_id);
+    }
   });
 
   const batch = [];
+  let inserted = 0;
   const count = await parseCSV(join(GTFS_PATH, 'stop_times.txt'), (row) => {
+    if (!repTripSet.has(row.trip_id)) return;
     batch.push(row);
-    if (batch.length >= 50_000) insertMany(batch.splice(0));
+    inserted++;
+    if (batch.length >= 5_000) insertMany(batch.splice(0));
   });
   if (batch.length) insertMany(batch);
-  console.log(`\n  Done: ${count.toLocaleString()} stop_times`);
+  console.log(`\n  Scanned ${count.toLocaleString()} rows, inserted ${inserted.toLocaleString()} into route_stops`);
 }
 
 async function importShapes(db) {
@@ -139,10 +157,10 @@ async function importShapes(db) {
 }
 
 function buildIndexes(db) {
-  console.log('\nBuilding indexes (may take a few minutes)...');
+  console.log('\nBuilding indexes...');
   const indexes = [
-    'CREATE INDEX IF NOT EXISTS idx_stop_times_stop ON stop_times(stop_id)',
-    'CREATE INDEX IF NOT EXISTS idx_stop_times_trip_seq ON stop_times(trip_id, stop_sequence)',
+    'CREATE INDEX IF NOT EXISTS idx_route_stops_stop ON route_stops(stop_id)',
+    'CREATE INDEX IF NOT EXISTS idx_route_stops_route_dir_seq ON route_stops(route_id, direction_id, stop_sequence)',
     'CREATE INDEX IF NOT EXISTS idx_stops_coords ON stops(stop_lat, stop_lon)',
     'CREATE INDEX IF NOT EXISTS idx_trips_route ON trips(route_id)',
     'CREATE INDEX IF NOT EXISTS idx_shapes_id ON shapes(shape_id, shape_pt_sequence)',
@@ -163,7 +181,7 @@ async function main() {
   const db = createDb(DB_PATH);
 
   // Clear existing data for a fresh import
-  db.exec('DELETE FROM stop_times');
+  db.exec('DELETE FROM route_stops');
   db.exec('DELETE FROM shapes');
   db.exec('DELETE FROM trips');
   db.exec('DELETE FROM routes');
@@ -174,7 +192,7 @@ async function main() {
   await importStops(db);
   await importRoutes(db);
   await importTrips(db);
-  await importStopTimes(db);
+  await importRouteStops(db);
   await importShapes(db);
   buildIndexes(db);
 

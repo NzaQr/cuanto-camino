@@ -30,10 +30,13 @@ export function createDb(path) {
       direction_id INTEGER DEFAULT 0
     );
 
-    CREATE TABLE IF NOT EXISTS stop_times (
-      trip_id       TEXT    NOT NULL,
+    CREATE TABLE IF NOT EXISTS route_stops (
+      route_id      TEXT    NOT NULL,
+      direction_id  INTEGER NOT NULL,
       stop_id       TEXT    NOT NULL,
-      stop_sequence INTEGER NOT NULL
+      stop_sequence INTEGER NOT NULL,
+      trip_id       TEXT    NOT NULL,
+      shape_id      TEXT
     );
 
     CREATE TABLE IF NOT EXISTS shapes (
