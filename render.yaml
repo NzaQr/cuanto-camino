@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: cuanto-camino-api
+    runtime: node
+    rootDir: backend
+    buildCommand: |
+      npm install &&
+      bash scripts/download-gtfs.sh &&
+      GTFS_PATH=./gtfs-data node src/import-gtfs.js
+    startCommand: node src/server.js
+    envVars:
+      - key: BA_CLIENT_ID
+        sync: false
+      - key: BA_CLIENT_SECRET
+        sync: false
+      - key: CORS_ORIGIN
+        sync: false
+      - key: GTFS_PATH
+        value: ./gtfs-data
