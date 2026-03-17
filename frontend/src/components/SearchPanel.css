@@ -282,12 +282,17 @@
   }
 
   .panel-body {
-    gap: var(--space-sm);
+    gap: var(--space-md);
     padding: var(--space-sm) var(--space-sm) var(--space-md);
+  }
+
+  .points-card {
+    overflow: visible;
   }
 
   .radius-section {
     gap: var(--space-sm);
+    margin-top: var(--space-sm);
   }
 
   .action-row {

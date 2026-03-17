@@ -1,8 +1,24 @@
-import React, { useReducer, useEffect, useRef, useCallback, useId, useState } from 'react';
+import React, { useReducer, useEffect, useRef, useCallback, useId, useState, useSyncExternalStore } from 'react';
 import ReactDOM from 'react-dom';
 import { MapPin, X } from 'lucide-react';
 import type { Place } from '../types.ts';
 import './PlaceInput.css';
+
+const MOBILE_QUERY = '(max-width: 640px)';
+const mql = typeof window !== 'undefined' ? window.matchMedia(MOBILE_QUERY) : null;
+
+function subscribe(cb: () => void) {
+  mql?.addEventListener('change', cb);
+  return () => mql?.removeEventListener('change', cb);
+}
+
+function useIsMobile() {
+  return useSyncExternalStore(
+    subscribe,
+    () => mql?.matches ?? false,
+    () => false,
+  );
+}
 
 const NOMINATIM_URL = 'https://nominatim.openstreetmap.org/search';
 const AMBA_VIEWBOX = '-58.60,-34.80,-58.28,-34.50';
@@ -114,31 +130,31 @@ interface DropdownProps {
   activeIndex: number;
   listboxId: string;
   optionIdPrefix: string;
+  inline: boolean;
   onSelect: (result: NominatimResult) => void;
 }
 
-function Dropdown({ anchorRef, suggestions, activeIndex, listboxId, optionIdPrefix, onSelect }: DropdownProps) {
+function Dropdown({ anchorRef, suggestions, activeIndex, listboxId, optionIdPrefix, inline, onSelect }: DropdownProps) {
   const [rect, setRect] = useState<DOMRect | null>(null);
 
   useEffect(() => {
-    if (!anchorRef.current) return;
+    if (inline || !anchorRef.current) return;
     const r = anchorRef.current.getBoundingClientRect();
     setRect(r);
-  }, [anchorRef, suggestions]);
+  }, [anchorRef, suggestions, inline]);
 
-  if (!rect) return null;
-
-  return ReactDOM.createPortal(
+  const list = (
     <ul
       className="place-dropdown"
       role="listbox"
       id={listboxId}
-      style={{
-        position: 'fixed',
-        top: rect.bottom,
-        left: rect.left,
-        width: rect.width,
-      }}
+      style={
+        inline
+          ? undefined
+          : rect
+            ? { position: 'fixed', top: rect.bottom, left: rect.left, width: rect.width }
+            : { display: 'none' }
+      }
     >
       {suggestions.map((result, i) => (
         <li
@@ -156,9 +172,10 @@ function Dropdown({ anchorRef, suggestions, activeIndex, listboxId, optionIdPref
           <span className="suggestion-text">{result.display_name}</span>
         </li>
       ))}
-    </ul>,
-    document.body,
+    </ul>
   );
+
+  return inline ? list : ReactDOM.createPortal(list, document.body);
 }
 
 interface PlaceInputProps {
@@ -174,6 +191,7 @@ function PlaceInput({ label, color, value, placeholder, onSelect, onClear }: Pla
   const id = useId();
   const listboxId = `${id}-listbox`;
   const optionIdPrefix = `${id}-option`;
+  const isMobile = useIsMobile();
 
   const [state, dispatch] = useReducer(searchReducer, {
     ...initialSearchState,
@@ -321,6 +339,7 @@ function PlaceInput({ label, color, value, placeholder, onSelect, onClear }: Pla
           activeIndex={activeIndex}
           listboxId={listboxId}
           optionIdPrefix={optionIdPrefix}
+          inline={isMobile}
           onSelect={handleSelect}
         />
       ) : null}

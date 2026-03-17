@@ -82,8 +82,8 @@
   }
 
   .panel-container.panel-open {
-    max-height: 85vh;
-    max-height: 85dvh;
+    max-height: 95vh;
+    max-height: 95dvh;
     overflow-y: auto;
     padding-bottom: env(safe-area-inset-bottom, 0px);
   }
