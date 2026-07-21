@@ -1,5 +1,6 @@
 import React, { memo } from "react";
-import { Footprints, ChevronUp, ChevronDown } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { WalkingIcon } from "@hugeicons/core-free-icons";
 import type { FoundRoute } from "../types.ts";
 import "./RouteResults.css";
 
@@ -41,7 +42,7 @@ const RouteCard = memo(function RouteCard({
         </div>
 
         <div className="route-walk-total">
-          <Footprints size={12} className="walk-icon" />
+          <HugeiconsIcon icon={WalkingIcon} size={12} color="currentColor" strokeWidth={1.75} className="walk-icon" />
           <span>
             {route.boardStop.walkMeters}m al subir ·{" "}
             {route.alightStop.walkMeters}m al bajar

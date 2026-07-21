@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -7,39 +7,110 @@
 }
 
 :root {
-  --color-primary: #4e6b8a;
-  --color-primary-dark: #3a5472;
-  --color-primary-light: #eef2f7;
-  --color-success: #2a8c54;
-  --color-danger: #c0392b;
+  /* Ink / text */
+  --color-ink: #171717;
+  --color-ink-secondary: #525252;
+  --color-ink-muted: #8a8a8a;
+  --color-text: var(--color-ink);
+  --color-text-secondary: var(--color-ink-secondary);
+  --color-text-muted: var(--color-ink-muted);
+
+  /* Paper / surfaces — cool neutrals */
+  --color-paper: #f4f4f5;
+  --color-surface: #fafafa;
+  --color-surface-elevated: #ffffff;
+  --color-surface-2: #f0f0f1;
+
+  /* Hairline / border */
+  --color-border: rgba(23, 23, 23, 0.1);
+  --color-border-strong: rgba(23, 23, 23, 0.16);
+  --color-border-light: rgba(23, 23, 23, 0.06);
+
+  /* Semantic */
   --color-origin: #0d9488;
-  --color-destination: #d97706;
+  --color-origin-soft: rgba(13, 148, 136, 0.12);
+  --color-destination: #e11d48;
+  --color-destination-soft: rgba(225, 29, 72, 0.12);
+  --color-route: #171717;
+  --color-primary: #171717;
+  --color-primary-dark: #0a0a0a;
+  --color-primary-light: #f0f0f1;
+  --color-action: #171717;
+  --color-action-hover: #404040;
+  --color-success: #16a34a;
+  --color-success-soft: #eef8f1;
+  --color-danger: #dc2626;
+  --color-danger-soft: #fef2f2;
   --color-warning: #d97706;
-  --color-warning-dark: #92400e;
-  --color-surface: #faf9f7;
-  --color-surface-2: #f0ece5;
-  --color-text: #2a2824;
-  --color-text-secondary: #5c5750;
-  --color-text-muted: #9d9890;
-  --color-border: #dcd7ce;
-  --color-border-light: #e8e3db;
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.08);
-  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.06), 0 2px 4px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.07), 0 4px 6px rgba(0, 0, 0, 0.04);
-  --shadow-panel: 0 8px 32px rgba(0, 0, 0, 0.11), 0 2px 8px rgba(0, 0, 0, 0.06);
+  --color-warning-dark: #b45309;
+  --color-warning-soft: #fffbeb;
+
+  /* Soft layered shadows */
+  --shadow-sm:
+    0px 2px 3px -1px rgba(0, 0, 0, 0.08),
+    0px 1px 0px 0px rgba(0, 0, 0, 0.02),
+    0px 0px 0px 1px rgba(0, 0, 0, 0.06);
+  --shadow-md:
+    0px 0px 0px 1px rgba(0, 0, 0, 0.05),
+    0px 1px 1px -0.5px rgba(0, 0, 0, 0.05),
+    0px 3px 3px -1.5px rgba(0, 0, 0, 0.05),
+    0px 6px 6px -3px rgba(0, 0, 0, 0.05),
+    0px 12px 12px -6px rgba(0, 0, 0, 0.05);
+  --shadow-lg:
+    0 2.8px 2.2px rgba(0, 0, 0, 0.03),
+    0 6.7px 5.3px rgba(0, 0, 0, 0.04),
+    0 12.5px 10px rgba(0, 0, 0, 0.05),
+    0 22.3px 17.9px rgba(0, 0, 0, 0.06),
+    0 41.8px 33.4px rgba(0, 0, 0, 0.07);
+  --shadow-panel: var(--shadow-md), 0 16px 40px -12px rgba(0, 0, 0, 0.12);
+  --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.1), 0 -2px 8px rgba(0, 0, 0, 0.04);
+
+  /* Radii — outer = inner + padding for nested surfaces */
+  --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
   --radius-lg: 16px;
+  --radius-xl: 20px;
+  --radius-sheet: 18px;
+
+  /* Spacing */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
   --space-lg: 24px;
+  --space-xl: 32px;
+
+  /* Focus / hit */
+  --focus-ring: 0 0 0 2px var(--color-surface), 0 0 0 4px var(--color-primary);
+  --hit-min: 44px;
+
+  /* Sheet / safe area */
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-top: env(safe-area-inset-top, 0px);
+  --sheet-peek: calc(64px + var(--safe-bottom));
+  --sheet-max: min(92dvh, 92svh);
   --panel-width: 380px;
-  --transition-fast: 0.15s ease;
-  --transition-med: 0.25s ease;
-  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  font-size: 14px;
-  color: var(--color-text);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0, 0, 1);
+  --ease-sheet: cubic-bezier(0.32, 0.72, 0, 1);
+  --transition-fast: 150ms var(--ease-out);
+  --transition-med: 280ms var(--ease-sheet);
+
+  /* Z-index scale */
+  --z-map: 0;
+  --z-map-controls: 10;
+  --z-panel: 1000;
+  --z-hint: 1000;
+  --z-dropdown: 1100;
+
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-size: 15px;
+  line-height: 1.45;
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 html {
@@ -53,15 +124,18 @@ body, #root {
   width: 100%;
   height: 100%;
   overflow: hidden;
+  background: var(--color-paper);
 }
 
 button {
   cursor: pointer;
   font-family: inherit;
-  font-size: 14px;
+  font-size: inherit;
   border: none;
   border-radius: var(--radius-sm);
-  transition: background var(--transition-fast), opacity var(--transition-fast), box-shadow var(--transition-fast), transform var(--transition-fast);
+  transition-property: background, color, box-shadow, transform, opacity;
+  transition-duration: 150ms;
+  transition-timing-function: var(--ease-out);
 }
 
 button:disabled {
@@ -70,15 +144,74 @@ button:disabled {
 }
 
 button:focus-visible {
-  outline: 2px solid var(--color-primary);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--focus-ring);
 }
 
 input[type="range"] {
   width: 100%;
   accent-color: var(--color-primary);
+  height: 28px;
 }
 
-/* Leaflet z-index fix */
-.leaflet-pane { z-index: 1; }
-.leaflet-top, .leaflet-bottom { z-index: 10; }
+/* Leaflet: keep map under chrome WITHOUT flattening pane stack */
+.leaflet-container {
+  z-index: var(--z-map);
+  isolation: isolate;
+  background: #e8e8ea;
+  font: inherit;
+}
+
+.leaflet-control-container {
+  z-index: var(--z-map-controls);
+}
+
+.leaflet-top {
+  top: calc(12px + var(--safe-top));
+}
+
+.leaflet-right {
+  right: 12px;
+}
+
+.leaflet-control-zoom {
+  border: none !important;
+  border-radius: var(--radius-sm) !important;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm) !important;
+}
+
+.leaflet-control-zoom a {
+  width: 40px !important;
+  height: 40px !important;
+  line-height: 40px !important;
+  color: var(--color-ink) !important;
+  background: var(--color-surface-elevated) !important;
+}
+
+.leaflet-control-zoom a:hover {
+  background: var(--color-surface-2) !important;
+}
+
+/* Custom DivIcon pins — SVG keeps proportions (CSS teardrop warps on non-square boxes) */
+.map-pin {
+  background: transparent !important;
+  border: none !important;
+}
+
+.map-pin-glyph {
+  display: block;
+  width: 28px;
+  height: 36px;
+  overflow: visible;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.22))
+    drop-shadow(0 4px 8px rgba(0, 0, 0, 0.14));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

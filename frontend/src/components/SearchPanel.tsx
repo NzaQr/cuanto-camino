@@ -1,13 +1,14 @@
 import React from "react";
+import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Bus,
-  ChevronUp,
-  ChevronDown,
-  AlertTriangle,
-  SearchX,
-  CheckCircle2,
-  Footprints,
-} from "lucide-react";
+  Bus01Icon,
+  ChevronUpIcon,
+  ChevronDownIcon,
+  Alert02Icon,
+  SearchRemoveIcon,
+  CheckmarkCircle02Icon,
+  WalkingIcon,
+} from "@hugeicons/core-free-icons";
 import type { Place, RouteSuggestion } from "../types.ts";
 import "./SearchPanel.css";
 import PlaceInput from "./PlaceInput.tsx";
@@ -73,26 +74,33 @@ function SearchPanel({
     <div className="search-panel">
       <div
         className="panel-header"
+        data-sheet-handle
         role="button"
         tabIndex={0}
-        onClick={onTogglePanel}
         onKeyDown={(e) => {
           if (e.key === "Enter" || e.key === " ") {
             e.preventDefault();
             onTogglePanel();
           }
         }}
+        aria-expanded={panelOpen}
         aria-label={panelOpen ? "Cerrar menú" : "Abrir menú"}
       >
+        <div className="sheet-grabber" aria-hidden="true" />
         <div className="panel-icon">
-          <Bus size={20} />
+          <HugeiconsIcon icon={Bus01Icon} size={20} color="currentColor" strokeWidth={1.75} />
         </div>
         <div>
           <h1 className="panel-title">Cuánto Camino</h1>
           <p className="panel-subtitle">Encontrá tu línea</p>
         </div>
         <span className="panel-toggle-chevron">
-          {panelOpen ? <ChevronDown size={16} /> : <ChevronUp size={16} />}
+          <HugeiconsIcon
+            icon={panelOpen ? ChevronDownIcon : ChevronUpIcon}
+            size={16}
+            color="currentColor"
+            strokeWidth={1.75}
+          />
         </span>
       </div>
 
@@ -209,7 +217,7 @@ function SearchPanel({
 
       {error ? (
         <div className="feedback error">
-          <AlertTriangle size={14} className="feedback-icon" />
+          <HugeiconsIcon icon={Alert02Icon} size={14} color="currentColor" strokeWidth={1.75} className="feedback-icon" />
           <span>{error}</span>
         </div>
       ) : null}
@@ -219,7 +227,7 @@ function SearchPanel({
           {routeCount === 0 ? (
             <div className="feedback-content-vertical">
               <div className="feedback-message-row">
-                <SearchX size={14} className="feedback-icon" />
+                <HugeiconsIcon icon={SearchRemoveIcon} size={14} color="currentColor" strokeWidth={1.75} className="feedback-icon" />
                 <span>Ninguna línea directa en esta zona.</span>
               </div>
               {suggestion ? (
@@ -228,7 +236,7 @@ function SearchPanel({
                   className="suggestion-btn"
                   onClick={onApplySuggestion}
                 >
-                  <Footprints size={12} className="suggestion-icon" />
+                  <HugeiconsIcon icon={WalkingIcon} size={12} color="currentColor" strokeWidth={1.75} className="suggestion-icon" />
                   <span>
                     Ver {suggestion.count}{" "}
                     {suggestion.count === 1 ? "línea" : "líneas"} caminando{" "}
@@ -241,7 +249,7 @@ function SearchPanel({
             </div>
           ) : (
             <>
-              <CheckCircle2 size={14} className="feedback-icon" />
+              <HugeiconsIcon icon={CheckmarkCircle02Icon} size={14} color="currentColor" strokeWidth={1.75} className="feedback-icon" />
               <span>
                 {routeCount === 1 ? (
                   "Se encontró 1 línea."

@@ -3,17 +3,50 @@
   flex-direction: column;
   background: var(--color-surface);
   overflow: hidden;
-  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   overflow-y: auto;
 }
 
 .panel-header {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
-  padding: 14px var(--space-md) 12px;
-  background: linear-gradient(135deg, #2c3d50 0%, #4e6b8a 100%);
+  gap: 12px;
+  padding: 14px var(--space-md) 13px;
+  padding-top: 18px;
+  background: var(--color-primary);
   color: white;
+  min-height: var(--hit-min);
+  position: relative;
+  touch-action: none;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.panel-header:active {
+  cursor: grabbing;
+}
+
+.sheet-grabber {
+  display: none;
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.panel-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 50%);
+  pointer-events: none;
 }
 
 .panel-icon {
@@ -22,25 +55,29 @@
   justify-content: center;
   width: 36px;
   height: 36px;
-  background: rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.12);
   border-radius: var(--radius-sm);
   color: white;
   flex-shrink: 0;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
 .panel-title {
-  font-size: 15px;
-  font-weight: 700;
+  font-size: 16px;
+  font-weight: 750;
   color: white;
   margin: 0;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+  text-wrap: balance;
 }
 
 .panel-subtitle {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.75);
-  margin: 0;
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.72);
+  margin: 2px 0 0;
   font-weight: 500;
+  letter-spacing: 0.01em;
 }
 
 .panel-body {
@@ -50,74 +87,26 @@
   padding: var(--space-md);
 }
 
-/* Points card */
+/* Points card — concentric: outer 12, padding ~0, inner inputs flush */
 .points-card {
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
+  background: var(--color-surface-elevated);
+  border-radius: var(--radius-md);
   overflow: hidden;
   box-shadow: var(--shadow-sm);
-}
-
-.coord-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-sm);
-  padding: 10px var(--space-sm);
-  background: var(--color-surface);
-}
-
-.coord-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-shadow:
-    0 0 0 2px rgba(255, 255, 255, 0.8),
-    0 0 0 3px rgba(0, 0, 0, 0.15);
-}
-
-.coord-content {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.coord-label {
-  font-size: 11px;
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.coord-value {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--color-text);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.coord-hint {
-  font-size: 12px;
-  color: var(--color-text-muted);
-  font-style: italic;
 }
 
 .divider-line {
   height: 1px;
   background: var(--color-border-light);
-  margin: 0 var(--space-sm);
+  margin: 0 12px;
 }
 
-/* Map tip */
 .map-tip {
-  font-size: 11px;
-  color: var(--color-text-muted);
-  font-style: italic;
+  font-size: 12px;
+  color: var(--color-ink-muted);
   margin: -4px 0 0;
+  line-height: 1.4;
+  text-wrap: pretty;
 }
 
 /* Radius */
@@ -130,26 +119,25 @@
 .radius-link-row {
   display: flex;
   align-items: center;
-  gap: var(--space-sm);
+  gap: 10px;
   font-size: 13px;
-  color: var(--color-text-secondary);
+  color: var(--color-ink-secondary);
   cursor: pointer;
+  min-height: 28px;
+  position: relative;
 }
 
 .radius-link-checkbox {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   accent-color: var(--color-primary);
+  flex-shrink: 0;
 }
 
 .radius-slider-block {
   display: flex;
   flex-direction: column;
   gap: var(--space-xs);
-}
-
-.radius-slider-block + .radius-slider-block {
-  margin-top: 0;
 }
 
 .radius-value-origin {
@@ -169,7 +157,7 @@
 .radius-label {
   font-size: 13px;
   font-weight: 500;
-  color: var(--color-text-secondary);
+  color: var(--color-ink-secondary);
 }
 
 .radius-value {
@@ -182,51 +170,65 @@
 .radius-ticks {
   display: flex;
   justify-content: space-between;
-  font-size: 10px;
-  color: var(--color-text-muted);
+  font-size: 11px;
+  color: var(--color-ink-muted);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Actions */
 .action-row {
   display: flex;
   gap: var(--space-sm);
+  align-items: stretch;
 }
 
 .btn-primary {
   flex: 1;
-  padding: 10px var(--space-md);
-  background: var(--color-primary);
+  min-height: var(--hit-min);
+  padding: 12px var(--space-md);
+  background: var(--color-action);
   color: white;
-  font-weight: 600;
-  font-size: 13px;
-  letter-spacing: 0.02em;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-sm);
+  font-weight: 650;
+  font-size: 14px;
+  letter-spacing: 0.01em;
+  border-radius: var(--radius-md);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 1px 2px rgba(28, 25, 22, 0.12),
+    0 4px 12px rgba(47, 74, 99, 0.28);
 }
 
 .btn-primary:hover:not(:disabled) {
-  background: var(--color-primary-dark);
-  box-shadow: var(--shadow-md);
-  transform: translateY(-1px);
+  background: var(--color-action-hover);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.12) inset,
+    0 2px 4px rgba(28, 25, 22, 0.12),
+    0 6px 16px rgba(47, 74, 99, 0.32);
 }
 
 .btn-primary:active:not(:disabled) {
-  transform: translateY(0);
-  box-shadow: var(--shadow-sm);
+  transform: scale(0.96);
 }
 
 .btn-ghost {
-  padding: 10px var(--space-md);
+  min-height: var(--hit-min);
+  min-width: var(--hit-min);
+  padding: 12px 14px;
   background: transparent;
-  color: var(--color-text-secondary);
-  border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
+  color: var(--color-ink-secondary);
+  border-radius: var(--radius-md);
+  font-size: 14px;
+  font-weight: 550;
+  box-shadow: var(--shadow-sm);
 }
 
 .btn-ghost:hover {
   background: var(--color-surface-2);
-  border-color: var(--color-text-muted);
+  color: var(--color-ink);
+}
+
+.btn-ghost:active {
+  transform: scale(0.96);
 }
 
 .loading-inline {
@@ -253,10 +255,22 @@
 }
 
 .panel-toggle-chevron {
-  display: none; /* visible only on mobile */
+  display: none;
   align-items: center;
   justify-content: center;
   margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-xs);
+  background: rgba(255, 255, 255, 0.1);
+  flex-shrink: 0;
+  position: relative;
+}
+
+.panel-toggle-chevron::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
 }
 
 @media (max-width: 640px) {
@@ -264,12 +278,17 @@
     display: flex;
   }
 
-  .panel-header {
-    cursor: pointer;
+  .sheet-grabber {
+    display: block;
   }
 
-  .panel-header:hover {
-    background: linear-gradient(135deg, #223040 0%, #3a5472 100%);
+  .panel-header {
+    cursor: grab;
+  }
+
+  .panel-header:active {
+    background: var(--color-primary-dark);
+    cursor: grabbing;
   }
 
   .search-panel {
@@ -283,25 +302,37 @@
 
   .panel-body {
     gap: var(--space-md);
-    padding: var(--space-sm) var(--space-sm) var(--space-md);
+    padding: 12px 12px var(--space-md);
   }
 
   .points-card {
     overflow: visible;
+    /* Concentric with panel: sheet 18, body pad 12 → card ~10–12 */
+    border-radius: 10px;
   }
 
   .radius-section {
     gap: var(--space-sm);
-    margin-top: var(--space-sm);
   }
 
   .action-row {
     position: sticky;
     bottom: 0;
-    background: var(--color-surface);
-    padding: var(--space-sm) var(--space-sm) var(--space-xs);
-    margin-top: var(--space-xs);
-    border-top: 1px solid var(--color-border-light);
+    z-index: 2;
+    background: linear-gradient(
+      180deg,
+      rgba(251, 250, 247, 0) 0%,
+      var(--color-surface) 28%
+    );
+    padding: var(--space-md) 4px var(--space-sm);
+    margin: 0 -4px;
+    gap: 10px;
+  }
+
+  .btn-primary,
+  .btn-ghost {
+    min-height: var(--hit-min);
+    font-size: 15px;
   }
 }
 
@@ -309,11 +340,23 @@
 .feedback {
   display: flex;
   align-items: flex-start;
-  gap: 7px;
-  padding: 10px var(--space-md);
+  gap: 8px;
+  padding: 12px var(--space-md);
   font-size: 13px;
-  line-height: 1.4;
+  line-height: 1.45;
   border-top: 1px solid var(--color-border-light);
+  animation: feedback-in 220ms var(--ease-out) both;
+}
+
+@keyframes feedback-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .feedback-icon {
@@ -322,104 +365,112 @@
 }
 
 .feedback.success {
-  background: #edf8f2;
+  background: var(--color-success-soft);
   color: var(--color-success);
 }
 
 .feedback.warning {
   flex-direction: column;
   align-items: stretch;
-  background: #fdf8ee;
+  background: var(--color-warning-soft);
   color: var(--color-warning);
 }
 
 .feedback.error {
-  background: #fdf1f0;
+  background: var(--color-danger-soft);
   color: var(--color-danger);
 }
 
-/* Vertical layout for warning feedback with message + button stacked */
+.feedback strong {
+  font-variant-numeric: tabular-nums;
+}
+
 .feedback-content-vertical {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 10px;
   width: 100%;
-  min-width: 0; /* allow flex child to shrink */
-  flex: 1; /* take full width in parent flex container */
+  min-width: 0;
+  flex: 1;
 }
 
 .feedback-message-row {
   display: flex;
   align-items: flex-start;
-  gap: 7px;
+  gap: 8px;
 }
 
-/* Suggestion button - Polished design following make-interfaces-feel-better principles */
 .suggestion-btn {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  padding: 10px 14px;
-  padding-right: 12px; /* icon-side = text-side - 2px for optical alignment */
+  padding: 11px 14px;
+  padding-right: 12px;
   background: linear-gradient(
     135deg,
-    rgba(217, 119, 6, 0.08) 0%,
-    rgba(217, 119, 6, 0.12) 100%
+    rgba(194, 65, 12, 0.08) 0%,
+    rgba(194, 65, 12, 0.14) 100%
   );
-  /* Shadows instead of borders - adapts to any background */
   box-shadow:
-    0px 0px 0px 1px rgba(217, 119, 6, 0.15),
-    0px 1px 2px -1px rgba(217, 119, 6, 0.1),
-    0px 2px 4px 0px rgba(217, 119, 6, 0.05);
+    0px 0px 0px 1px rgba(194, 65, 12, 0.16),
+    0px 1px 2px -1px rgba(194, 65, 12, 0.1),
+    0px 2px 4px 0px rgba(194, 65, 12, 0.05);
   border-radius: var(--radius-sm);
-  font-size: 12px;
-  font-weight: 600;
+  font-size: 13px;
+  font-weight: 650;
   letter-spacing: -0.01em;
-  color: var(--color-warning-dark, #92400e);
+  color: var(--color-warning-dark);
   cursor: pointer;
-  /* Specific transition properties - never use 'all' */
   transition-property: transform, box-shadow, background;
   transition-duration: 150ms;
-  transition-timing-function: cubic-bezier(0.2, 0, 0, 1);
+  transition-timing-function: var(--ease-out);
   width: 100%;
-  /* Minimum hit area: 40×40px - achieved via padding */
-  min-height: 40px;
+  min-height: var(--hit-min);
   position: relative;
+  font-variant-numeric: tabular-nums;
 }
 
-/* Extended hit area for better touch targets */
 .suggestion-btn::after {
-  content: "";
+  content: '';
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
   width: 100%;
-  min-width: 40px;
+  min-width: var(--hit-min);
   height: 100%;
-  min-height: 40px;
+  min-height: var(--hit-min);
 }
 
 .suggestion-btn:hover {
   background: linear-gradient(
     135deg,
-    rgba(217, 119, 6, 0.12) 0%,
-    rgba(217, 119, 6, 0.18) 100%
+    rgba(194, 65, 12, 0.12) 0%,
+    rgba(194, 65, 12, 0.2) 100%
   );
   box-shadow:
-    0px 0px 0px 1px rgba(217, 119, 6, 0.25),
-    0px 2px 4px -1px rgba(217, 119, 6, 0.15),
-    0px 4px 8px 0px rgba(217, 119, 6, 0.08);
+    0px 0px 0px 1px rgba(194, 65, 12, 0.25),
+    0px 2px 4px -1px rgba(194, 65, 12, 0.15),
+    0px 4px 8px 0px rgba(194, 65, 12, 0.08);
 }
 
-/* Scale on press - tactile feedback */
 .suggestion-btn:active {
   transform: scale(0.96);
 }
 
+.suggestion-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
 .suggestion-icon {
   flex-shrink: 0;
-  /* Optical adjustment - shift slightly for better visual balance */
   margin-left: -1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .feedback {
+    animation: none;
+  }
 }

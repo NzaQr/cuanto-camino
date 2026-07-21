@@ -1,6 +1,7 @@
 import React, { useReducer, useEffect, useRef, useCallback, useId, useState, useSyncExternalStore } from 'react';
 import ReactDOM from 'react-dom';
-import { MapPin, X } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Location01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 import type { Place } from '../types.ts';
 import './PlaceInput.css';
 
@@ -168,7 +169,7 @@ function Dropdown({ anchorRef, suggestions, activeIndex, listboxId, optionIdPref
             onSelect(result);
           }}
         >
-          <MapPin size={12} className="suggestion-icon" />
+          <HugeiconsIcon icon={Location01Icon} size={12} color="currentColor" strokeWidth={1.75} className="suggestion-icon" />
           <span className="suggestion-text">{result.display_name}</span>
         </li>
       ))}
@@ -325,7 +326,7 @@ function PlaceInput({ label, color, value, placeholder, onSelect, onClear }: Pla
                 tabIndex={-1}
                 aria-label="Limpiar"
               >
-                <X size={12} />
+                <HugeiconsIcon icon={Cancel01Icon} size={12} color="currentColor" strokeWidth={1.75} />
               </button>
             ) : null}
           </div>

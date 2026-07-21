@@ -2,6 +2,7 @@ import React, { useReducer, useCallback, useEffect, useRef, lazy, Suspense } fro
 import MapView from './components/MapView.tsx';
 import SearchPanel from './components/SearchPanel.tsx';
 import { useRouteSearch } from './hooks/useRouteSearch.ts';
+import { useBottomSheetGesture } from './hooks/useBottomSheetGesture.ts';
 import type { LatLng, Place } from './types.ts';
 import './App.css';
 
@@ -35,6 +36,7 @@ type AppAction =
   | { type: 'SELECT_LINE'; line: string | null }
   | { type: 'CLEAR_SELECTED_LINE' }
   | { type: 'TOGGLE_PANEL' }
+  | { type: 'SET_PANEL_OPEN'; open: boolean }
   | { type: 'RESET' };
 
 const initialAppState: AppState = {
@@ -108,6 +110,8 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, selectedLine: null };
     case 'TOGGLE_PANEL':
       return { ...state, panelOpen: !state.panelOpen };
+    case 'SET_PANEL_OPEN':
+      return { ...state, panelOpen: action.open };
     case 'RESET':
       return { ...initialAppState };
     default:
@@ -131,9 +135,22 @@ function App() {
 
   const panelRef = useRef<HTMLDivElement>(null);
 
+  const setPanelOpen = useCallback((open: boolean) => {
+    dispatch({ type: 'SET_PANEL_OPEN', open });
+  }, []);
+
+  useBottomSheetGesture(panelRef, {
+    open: panelOpen,
+    onOpenChange: setPanelOpen,
+  });
+
   useEffect(() => {
     if (!panelOpen && panelRef.current) {
       panelRef.current.scrollTop = 0;
+      const active = document.activeElement;
+      if (active instanceof HTMLElement && panelRef.current.contains(active)) {
+        active.blur();
+      }
     }
   }, [panelOpen]);
 
@@ -222,6 +239,7 @@ function App() {
           destRadius={destRadius}
           routes={routes || []}
           selectedLine={selectedLine}
+          panelOpen={panelOpen}
           onMapClick={handleMapClick}
         />
       </div>
@@ -229,7 +247,7 @@ function App() {
       <div ref={panelRef} className={`panel-container${panelOpen ? ' panel-open' : ''}`}>
         <SearchPanel
           panelOpen={panelOpen}
-          onTogglePanel={() => dispatch({ type: 'TOGGLE_PANEL' })}
+          onTogglePanel={() => dispatch({ type: 'SET_PANEL_OPEN', open: !panelOpen })}
           originName={originName}
           destName={destName}
           originRadius={originRadius}

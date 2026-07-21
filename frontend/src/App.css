@@ -3,13 +3,15 @@
   width: 100vw;
   height: 100vh;
   height: 100dvh;
+  height: 100svh;
   overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .map-container {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: var(--z-map);
 }
 
 .panel-container {
@@ -17,11 +19,13 @@
   top: var(--space-md);
   left: var(--space-md);
   width: var(--panel-width);
-  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
   overflow-x: hidden;
   overflow-y: auto;
-  z-index: 1000;
-  border-radius: var(--radius-md);
+  overscroll-behavior: contain;
+  z-index: var(--z-panel);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
   box-shadow: var(--shadow-panel);
   scrollbar-width: thin;
   scrollbar-color: var(--color-border) transparent;
@@ -36,35 +40,41 @@
   border-radius: 2px;
 }
 
-/* Map interaction hint — frosted glass */
+/* Map interaction hint */
 .map-hint {
   position: absolute;
   bottom: var(--space-lg);
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(17, 24, 39, 0.78);
+  background: rgba(23, 23, 23, 0.82);
   color: white;
-  padding: 9px 20px;
-  border-radius: 24px;
+  padding: 10px 18px;
+  border-radius: 999px;
   font-size: 13px;
   font-weight: 500;
-  z-index: 1000;
+  z-index: var(--z-hint);
   pointer-events: none;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: var(--shadow-sm);
   white-space: nowrap;
   letter-spacing: 0.01em;
+  max-width: calc(100vw - 48px);
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .map-hint strong {
   font-weight: 700;
 }
 
-/* Responsive: on small screens the panel goes to the bottom */
+/* Mobile bottom sheet — JS-driven --sheet-y for gesture + snap */
 @media (max-width: 640px) {
   .map-hint {
     display: none;
+  }
+
+  .leaflet-top.leaflet-right {
+    top: calc(10px + var(--safe-top));
+    right: 10px;
   }
 
   .panel-container {
@@ -73,18 +83,47 @@
     left: 0;
     right: 0;
     width: 100%;
-    border-radius: var(--radius-md) var(--radius-md) 0 0;
-    box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.16);
-    max-height: calc(56px + env(safe-area-inset-bottom, 0px));
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    max-height: none;
+    height: var(--sheet-max);
+    border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+    box-shadow: var(--shadow-sheet);
+    padding-bottom: var(--safe-bottom);
     overflow: hidden;
-    transition: max-height var(--transition-med);
+    /* Matches initial panelOpen: true until gesture hook takes over with px */
+    --sheet-y: 0px;
+    transform: translate3d(0, var(--sheet-y), 0);
+    transition-property: transform;
+    transition-duration: 280ms;
+    transition-timing-function: var(--ease-sheet);
+    will-change: transform;
+    -webkit-overflow-scrolling: touch;
+    touch-action: pan-y;
+  }
+
+  .panel-container:not(.panel-open):not(.is-dragging):not(.sheet-gesture) {
+    --sheet-y: calc(100% - var(--sheet-peek));
   }
 
   .panel-container.panel-open {
-    max-height: 95vh;
-    max-height: 95dvh;
     overflow-y: auto;
-    padding-bottom: env(safe-area-inset-bottom, 0px);
+    overscroll-behavior: contain;
+  }
+
+  .panel-container.is-dragging {
+    transition: none;
+    touch-action: none;
+  }
+
+  .panel-container.sheet-animating {
+    transition-property: transform;
+    transition-duration: 320ms;
+    transition-timing-function: var(--ease-sheet);
+  }
+}
+
+@media (max-width: 640px) and (prefers-reduced-motion: reduce) {
+  .panel-container,
+  .panel-container.sheet-animating {
+    transition-duration: 0.01ms;
   }
 }

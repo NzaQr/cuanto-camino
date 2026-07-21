@@ -11,6 +11,10 @@ import {
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
+import type { LatLng, FoundRoute } from "../types.ts";
+
+const BA_CENTER: [number, number] = [-34.6037, -58.3816];
+const ZOOM = 13;
 
 function ZoomControlToTopRight() {
   const map = useMap();
@@ -23,30 +27,73 @@ function ZoomControlToTopRight() {
   }, [map]);
   return null;
 }
-import markerShadow from "leaflet/dist/images/marker-shadow.png";
-import type { LatLng, FoundRoute } from "../types.ts";
 
-const BA_CENTER: [number, number] = [-34.6037, -58.3816];
-const ZOOM = 13;
+/**
+ * Leaflet measures container size once at init. If fonts, 100dvh, or the mobile
+ * sheet settle after that, vector layers (Circle SVG paths / markers) can paint
+ * at wrong pixel coords until a remount. Invalidate after layout + sheet motion.
+ */
+function MapLayoutSync({ panelOpen }: { panelOpen: boolean }) {
+  const map = useMap();
 
-function createColoredIcon(color: string): L.Icon {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="25" height="41" viewBox="0 0 25 41">
-    <path d="M12.5 0C5.6 0 0 5.6 0 12.5c0 9.4 12.5 28.5 12.5 28.5S25 21.9 25 12.5C25 5.6 19.4 0 12.5 0z"
-      fill="${color}" stroke="rgba(0,0,0,0.3)" stroke-width="1"/>
-    <circle cx="12.5" cy="12.5" r="5" fill="white" opacity="0.85"/>
-  </svg>`;
-  return new L.Icon({
-    iconUrl: `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`,
-    shadowUrl: markerShadow,
-    iconSize: [25, 41],
-    iconAnchor: [12, 41],
-    popupAnchor: [1, -34],
-    shadowSize: [41, 41],
+  const syncSize = React.useCallback(() => {
+    const container = map.getContainer();
+    if (!container.clientWidth || !container.clientHeight) return;
+    map.invalidateSize({ animate: false });
+  }, [map]);
+
+  React.useEffect(() => {
+    syncSize();
+    const raf = requestAnimationFrame(() => {
+      syncSize();
+      requestAnimationFrame(syncSize);
+    });
+
+    window.addEventListener("resize", syncSize);
+    window.addEventListener("orientationchange", syncSize);
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", syncSize);
+
+    void document.fonts?.ready?.then(() => {
+      syncSize();
+    });
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", syncSize);
+      window.removeEventListener("orientationchange", syncSize);
+      vv?.removeEventListener("resize", syncSize);
+    };
+  }, [map, syncSize]);
+
+  React.useEffect(() => {
+    const t1 = window.setTimeout(syncSize, 40);
+    const t2 = window.setTimeout(syncSize, 280);
+    return () => {
+      window.clearTimeout(t1);
+      window.clearTimeout(t2);
+    };
+  }, [panelOpen, syncSize]);
+
+  return null;
+}
+
+const ORIGIN_COLOR = "#0d9488";
+const DEST_COLOR = "#e11d48";
+const ROUTE_COLOR = "#171717";
+
+function createColoredIcon(color: string): L.DivIcon {
+  return L.divIcon({
+    className: "map-pin",
+    html: `<svg class="map-pin-glyph" width="28" height="36" viewBox="0 0 28 36" aria-hidden="true"><path fill="${color}" d="M14 0C7.373 0 2 5.373 2 12c0 8.25 12 24 12 24s12-15.75 12-24C26 5.373 20.627 0 14 0z"/><circle cx="14" cy="12" r="4.5" fill="#fff"/></svg>`,
+    iconSize: [28, 36],
+    iconAnchor: [14, 36],
+    popupAnchor: [0, -30],
   });
 }
 
-const originIcon = createColoredIcon("#0d9488");
-const destIcon = createColoredIcon("#d97706");
+const originIcon = createColoredIcon(ORIGIN_COLOR);
+const destIcon = createColoredIcon(DEST_COLOR);
 
 interface ClickHandlerProps {
   onMapClick: (latlng: LatLng) => void;
@@ -78,10 +125,12 @@ function FitBounds({ origin, destination, selectedRoute }: FitBoundsProps) {
           [destination.lat, destination.lng],
         ],
         {
-          padding: [40, 60],
+          padding: [48, 72],
           maxZoom: 17,
         },
       );
+      // fitBounds can leave SVG overlays one frame stale on first pairing
+      requestAnimationFrame(() => map.invalidateSize({ animate: false }));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedRoute?.line, origin, destination]);
@@ -103,7 +152,7 @@ function RoutePolylines({ routes, selectedLine }: RoutePolylinesProps) {
     <Polyline
       key={selected.line}
       positions={selected.shape}
-      pathOptions={{ color: "#1a73e8", weight: 5, opacity: 0.9 }}
+      pathOptions={{ color: ROUTE_COLOR, weight: 5, opacity: 0.9 }}
     />
   );
 }
@@ -115,6 +164,7 @@ interface MapViewProps {
   destRadius: number;
   routes: FoundRoute[];
   selectedLine: string | null;
+  panelOpen: boolean;
   onMapClick: (latlng: LatLng) => void;
 }
 
@@ -125,6 +175,7 @@ function MapView({
   destRadius,
   routes,
   selectedLine,
+  panelOpen,
   onMapClick,
 }: MapViewProps) {
   const hasRoutes = routes && routes.length > 0;
@@ -139,6 +190,10 @@ function MapView({
     ? [...new Map(routes.map((r) => [r.alightStop.id, r.alightStop])).values()]
     : [];
 
+  const tileUrl = import.meta.env.VITE_STADIAMAPS_API_KEY
+    ? `https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=${import.meta.env.VITE_STADIAMAPS_API_KEY}`
+    : "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png";
+
   return (
     <MapContainer
       center={BA_CENTER}
@@ -147,9 +202,10 @@ function MapView({
       zoomControl={false}
     >
       <ZoomControlToTopRight />
+      <MapLayoutSync panelOpen={panelOpen} />
       <TileLayer
         attribution='&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
-        url={`https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png?api_key=${import.meta.env.VITE_STADIAMAPS_API_KEY}`}
+        url={tileUrl}
       />
       <ClickHandler onMapClick={onMapClick} />
       <FitBounds
@@ -160,7 +216,11 @@ function MapView({
 
       {origin ? (
         <>
-          <Marker position={[origin.lat, origin.lng]} icon={originIcon}>
+          <Marker
+            position={[origin.lat, origin.lng]}
+            icon={originIcon}
+            zIndexOffset={200}
+          >
             <Popup>
               <strong>Origen</strong>
               <br />
@@ -168,13 +228,15 @@ function MapView({
             </Popup>
           </Marker>
           <Circle
+            key={`origin-circle-${origin.lat}-${origin.lng}-${originRadius}`}
             center={[origin.lat, origin.lng]}
             radius={originRadius}
             pathOptions={{
-              color: "#0d9488",
-              fillColor: "#0d9488",
-              fillOpacity: 0.07,
-              weight: 1.5,
+              color: ORIGIN_COLOR,
+              fillColor: ORIGIN_COLOR,
+              fillOpacity: 0.1,
+              weight: 2,
+              opacity: 0.85,
             }}
           />
         </>
@@ -182,7 +244,11 @@ function MapView({
 
       {destination ? (
         <>
-          <Marker position={[destination.lat, destination.lng]} icon={destIcon}>
+          <Marker
+            position={[destination.lat, destination.lng]}
+            icon={destIcon}
+            zIndexOffset={210}
+          >
             <Popup>
               <strong>Destino</strong>
               <br />
@@ -190,13 +256,15 @@ function MapView({
             </Popup>
           </Marker>
           <Circle
+            key={`dest-circle-${destination.lat}-${destination.lng}-${destRadius}`}
             center={[destination.lat, destination.lng]}
             radius={destRadius}
             pathOptions={{
-              color: "#d97706",
-              fillColor: "#d97706",
-              fillOpacity: 0.07,
-              weight: 1.5,
+              color: DEST_COLOR,
+              fillColor: DEST_COLOR,
+              fillOpacity: 0.1,
+              weight: 2,
+              opacity: 0.85,
             }}
           />
         </>
@@ -212,9 +280,9 @@ function MapView({
           center={[s.lat, s.lng]}
           radius={4}
           pathOptions={{
-            color: "#0d9488",
-            fillColor: "#0d9488",
-            fillOpacity: 0.7,
+            color: ORIGIN_COLOR,
+            fillColor: ORIGIN_COLOR,
+            fillOpacity: 0.75,
             weight: 1,
           }}
         >
@@ -232,9 +300,9 @@ function MapView({
           center={[s.lat, s.lng]}
           radius={4}
           pathOptions={{
-            color: "#d97706",
-            fillColor: "#d97706",
-            fillOpacity: 0.7,
+            color: DEST_COLOR,
+            fillColor: DEST_COLOR,
+            fillOpacity: 0.75,
             weight: 1,
           }}
         >
@@ -252,7 +320,7 @@ function MapView({
             center={[selectedRoute.boardStop.lat, selectedRoute.boardStop.lng]}
             radius={8}
             pathOptions={{
-              color: "#1a73e8",
+              color: ROUTE_COLOR,
               fillColor: "#ffffff",
               fillOpacity: 1,
               weight: 3,
@@ -275,7 +343,7 @@ function MapView({
             ]}
             radius={8}
             pathOptions={{
-              color: "#1a73e8",
+              color: ROUTE_COLOR,
               fillColor: "#ffffff",
               fillOpacity: 1,
               weight: 3,
