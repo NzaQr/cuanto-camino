@@ -91,7 +91,7 @@ function SearchPanel({
           <HugeiconsIcon icon={Bus01Icon} size={20} color="currentColor" strokeWidth={1.75} />
         </div>
         <div>
-          <h1 className="panel-title">Cuánto Camino</h1>
+          <h2 className="panel-title">Cuánto Camino</h2>
           <p className="panel-subtitle">Encontrá tu línea</p>
         </div>
         <span className="panel-toggle-chevron">

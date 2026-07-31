@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="es">
+<html lang="es-AR">
   <head>
     <meta charset="UTF-8" />
     <meta
@@ -7,12 +7,98 @@
       content="width=device-width, initial-scale=1.0, viewport-fit=cover, interactive-widget=resizes-content"
     />
     <meta name="theme-color" content="#2f4a63" />
-    <title>Cuánto Camino</title>
+
+    <title>Cuánto Camino — Colectivos de Buenos Aires | Encontrá tu línea</title>
+    <meta
+      name="description"
+      content="Buscá qué líneas de colectivo te llevan de un punto a otro en Buenos Aires. Elegí origen y destino en el mapa y encontrá las mejores rutas."
+    />
+    <link rel="canonical" href="https://cuantocamino.com/" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Cuánto Camino" />
+    <meta property="og:locale" content="es_AR" />
+    <meta property="og:url" content="https://cuantocamino.com/" />
+    <meta
+      property="og:title"
+      content="Cuánto Camino — Colectivos de Buenos Aires | Encontrá tu línea"
+    />
+    <meta
+      property="og:description"
+      content="Buscá qué líneas de colectivo te llevan de un punto a otro en Buenos Aires. Elegí origen y destino en el mapa y encontrá las mejores rutas."
+    />
+    <meta property="og:image" content="https://cuantocamino.com/og-image.jpg" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta
+      property="og:image:alt"
+      content="Cuánto Camino — Encontrá tu línea de colectivo en Buenos Aires"
+    />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@nazaintech" />
+    <meta name="twitter:creator" content="@nazaintech" />
+    <meta
+      name="twitter:title"
+      content="Cuánto Camino — Colectivos de Buenos Aires | Encontrá tu línea"
+    />
+    <meta
+      name="twitter:description"
+      content="Buscá qué líneas de colectivo te llevan de un punto a otro en Buenos Aires. Elegí origen y destino en el mapa y encontrá las mejores rutas."
+    />
+    <meta name="twitter:image" content="https://cuantocamino.com/og-image.jpg" />
+    <meta
+      name="twitter:image:alt"
+      content="Cuánto Camino — Encontrá tu línea de colectivo en Buenos Aires"
+    />
+
+    <!-- Icons & manifest -->
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+
+    <!-- Structured data -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "WebApplication",
+        "name": "Cuánto Camino",
+        "url": "https://cuantocamino.com/",
+        "description": "Buscá qué líneas de colectivo te llevan de un punto a otro en Buenos Aires. Elegí origen y destino en el mapa y encontrá las mejores rutas.",
+        "applicationCategory": "TravelApplication",
+        "operatingSystem": "Any",
+        "inLanguage": "es-AR",
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "ARS"
+        }
+      }
+    </script>
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🚌</text></svg>" />
+    <style>
+      .seo-h1 {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        padding: 0;
+        margin: -1px;
+        overflow: hidden;
+        clip: rect(0, 0, 0, 0);
+        white-space: nowrap;
+        border: 0;
+      }
+    </style>
   </head>
   <body>
+    <h1 class="seo-h1">
+      Cuánto Camino — Encontrá qué líneas de colectivo te llevan en Buenos Aires
+    </h1>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

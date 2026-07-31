@@ -1,0 +1,23 @@
+{
+  "name": "Cuánto Camino",
+  "short_name": "Cuánto Camino",
+  "description": "Encontrá qué líneas de colectivo te llevan de un punto a otro en Buenos Aires.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#fafafa",
+  "theme_color": "#2f4a63",
+  "lang": "es-AR",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ]
+}
