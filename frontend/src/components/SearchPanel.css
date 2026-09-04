@@ -42,10 +42,14 @@
 }
 
 .panel-header::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.06) 0%, transparent 50%);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.06) 0%,
+    transparent 50%
+  );
   pointer-events: none;
 }
 
@@ -87,7 +91,7 @@
   padding: var(--space-md);
 }
 
-/* Points card — concentric: outer 12, padding ~0, inner inputs flush */
+/* Points card | concentric: outer 12, padding ~0, inner inputs flush */
 .points-card {
   background: var(--color-surface-elevated);
   border-radius: var(--radius-md);
@@ -268,7 +272,7 @@
 }
 
 .panel-toggle-chevron::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: -6px;
 }
@@ -432,7 +436,7 @@
 }
 
 .suggestion-btn::after {
-  content: '';
+  content: "";
   position: absolute;
   top: 50%;
   left: 50%;

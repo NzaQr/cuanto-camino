@@ -1,6 +1,8 @@
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -15,7 +17,7 @@
   --color-text-secondary: var(--color-ink-secondary);
   --color-text-muted: var(--color-ink-muted);
 
-  /* Paper / surfaces — cool neutrals */
+  /* Paper / surfaces | cool neutrals */
   --color-paper: #f4f4f5;
   --color-surface: #fafafa;
   --color-surface-elevated: #ffffff;
@@ -47,25 +49,21 @@
 
   /* Soft layered shadows */
   --shadow-sm:
-    0px 2px 3px -1px rgba(0, 0, 0, 0.08),
-    0px 1px 0px 0px rgba(0, 0, 0, 0.02),
+    0px 2px 3px -1px rgba(0, 0, 0, 0.08), 0px 1px 0px 0px rgba(0, 0, 0, 0.02),
     0px 0px 0px 1px rgba(0, 0, 0, 0.06);
   --shadow-md:
-    0px 0px 0px 1px rgba(0, 0, 0, 0.05),
-    0px 1px 1px -0.5px rgba(0, 0, 0, 0.05),
+    0px 0px 0px 1px rgba(0, 0, 0, 0.05), 0px 1px 1px -0.5px rgba(0, 0, 0, 0.05),
     0px 3px 3px -1.5px rgba(0, 0, 0, 0.05),
-    0px 6px 6px -3px rgba(0, 0, 0, 0.05),
-    0px 12px 12px -6px rgba(0, 0, 0, 0.05);
+    0px 6px 6px -3px rgba(0, 0, 0, 0.05), 0px 12px 12px -6px rgba(0, 0, 0, 0.05);
   --shadow-lg:
-    0 2.8px 2.2px rgba(0, 0, 0, 0.03),
-    0 6.7px 5.3px rgba(0, 0, 0, 0.04),
-    0 12.5px 10px rgba(0, 0, 0, 0.05),
-    0 22.3px 17.9px rgba(0, 0, 0, 0.06),
+    0 2.8px 2.2px rgba(0, 0, 0, 0.03), 0 6.7px 5.3px rgba(0, 0, 0, 0.04),
+    0 12.5px 10px rgba(0, 0, 0, 0.05), 0 22.3px 17.9px rgba(0, 0, 0, 0.06),
     0 41.8px 33.4px rgba(0, 0, 0, 0.07);
   --shadow-panel: var(--shadow-md), 0 16px 40px -12px rgba(0, 0, 0, 0.12);
-  --shadow-sheet: 0 -8px 32px rgba(0, 0, 0, 0.1), 0 -2px 8px rgba(0, 0, 0, 0.04);
+  --shadow-sheet:
+    0 -8px 32px rgba(0, 0, 0, 0.1), 0 -2px 8px rgba(0, 0, 0, 0.04);
 
-  /* Radii — outer = inner + padding for nested surfaces */
+  /* Radii | outer = inner + padding for nested surfaces */
   --radius-xs: 6px;
   --radius-sm: 8px;
   --radius-md: 12px;
@@ -104,7 +102,12 @@
   --z-hint: 1000;
   --z-dropdown: 1100;
 
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-family:
+    "Plus Jakarta Sans",
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
   font-size: 15px;
   line-height: 1.45;
   color: var(--color-ink);
@@ -120,7 +123,8 @@ html {
   overflow: hidden;
 }
 
-body, #root {
+body,
+#root {
   width: 100%;
   height: 100%;
   overflow: hidden;
@@ -193,7 +197,7 @@ input[type="range"] {
   background: var(--color-surface-2) !important;
 }
 
-/* Custom DivIcon pins — SVG keeps proportions (CSS teardrop warps on non-square boxes) */
+/* Custom DivIcon pins | SVG keeps proportions (CSS teardrop warps on non-square boxes) */
 .map-pin {
   background: transparent !important;
   border: none !important;
@@ -209,7 +213,9 @@ input[type="range"] {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;

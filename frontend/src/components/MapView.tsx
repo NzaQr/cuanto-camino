@@ -289,7 +289,7 @@ function MapView({
           <Popup>
             {s.name}
             <br />
-            <small>Subida — a {s.walkMeters}m del origen</small>
+            <small>Subida | a {s.walkMeters}m del origen</small>
           </Popup>
         </CircleMarker>
       ))}
@@ -309,7 +309,7 @@ function MapView({
           <Popup>
             {s.name}
             <br />
-            <small>Bajada — a {s.walkMeters}m del destino</small>
+            <small>Bajada | a {s.walkMeters}m del destino</small>
           </Popup>
         </CircleMarker>
       ))}
@@ -327,7 +327,7 @@ function MapView({
             }}
           >
             <Popup>
-              <strong>Subida — Línea {selectedRoute.line}</strong>
+              <strong>Subida | Línea {selectedRoute.line}</strong>
               <br />
               {selectedRoute.boardStop.name}
               <br />
@@ -350,7 +350,7 @@ function MapView({
             }}
           >
             <Popup>
-              <strong>Bajada — Línea {selectedRoute.line}</strong>
+              <strong>Bajada | Línea {selectedRoute.line}</strong>
               <br />
               {selectedRoute.alightStop.name}
               <br />

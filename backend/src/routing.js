@@ -83,16 +83,38 @@ export function createRouting(db) {
   // Find minimum radius with routes by incrementing 25% each step.
   // Fetches stops at MAX_RADIUS once and filters in memory each iteration
   // to avoid repeated bbox queries against SQLite.
-  function findSuggestionRadius(origin, destination, initialOriginRadius, initialDestRadius) {
+  function findSuggestionRadius(
+    origin,
+    destination,
+    initialOriginRadius,
+    initialDestRadius,
+  ) {
     const MAX_RADIUS = 2000;
     const INCREMENT = 1.25; // 25% increase
 
     // Fetch all candidate stops once at the maximum possible radius and
     // pre-compute each stop's distance so the loop only does comparisons.
-    const allOriginStops = findStopsNear(origin.lat, origin.lng, MAX_RADIUS)
-      .map((s) => ({ ...s, dist: haversineMeters(origin.lat, origin.lng, s.stop_lat, s.stop_lon) }));
-    const allDestStops = findStopsNear(destination.lat, destination.lng, MAX_RADIUS)
-      .map((s) => ({ ...s, dist: haversineMeters(destination.lat, destination.lng, s.stop_lat, s.stop_lon) }));
+    const allOriginStops = findStopsNear(
+      origin.lat,
+      origin.lng,
+      MAX_RADIUS,
+    ).map((s) => ({
+      ...s,
+      dist: haversineMeters(origin.lat, origin.lng, s.stop_lat, s.stop_lon),
+    }));
+    const allDestStops = findStopsNear(
+      destination.lat,
+      destination.lng,
+      MAX_RADIUS,
+    ).map((s) => ({
+      ...s,
+      dist: haversineMeters(
+        destination.lat,
+        destination.lng,
+        s.stop_lat,
+        s.stop_lon,
+      ),
+    }));
 
     if (!allOriginStops.length || !allDestStops.length) return null;
 
@@ -103,7 +125,7 @@ export function createRouting(db) {
       const oR = Math.min(testOriginR, MAX_RADIUS);
       const dR = Math.min(testDestR, MAX_RADIUS);
 
-      // Filter in memory using pre-computed distances — no SQLite bbox query
+      // Filter in memory using pre-computed distances | no SQLite bbox query
       const oStops = allOriginStops.filter((s) => s.dist <= oR);
       const dStops = allDestStops.filter((s) => s.dist <= dR);
 
@@ -131,7 +153,12 @@ export function createRouting(db) {
 
     if (!originStops.length || !destStops.length) {
       // Try to find a suggestion even when no stops in range
-      const suggestion = findSuggestionRadius(origin, destination, originRadius, destRadius);
+      const suggestion = findSuggestionRadius(
+        origin,
+        destination,
+        originRadius,
+        destRadius,
+      );
       return { routes: [], originStops, destStops, suggestion };
     }
 
@@ -166,7 +193,12 @@ export function createRouting(db) {
 
     if (!rows.length) {
       // No routes at current radius - find suggestion with larger radius
-      const suggestion = findSuggestionRadius(origin, destination, originRadius, destRadius);
+      const suggestion = findSuggestionRadius(
+        origin,
+        destination,
+        originRadius,
+        destRadius,
+      );
       return { routes: [], originStops, destStops, suggestion };
     }
 

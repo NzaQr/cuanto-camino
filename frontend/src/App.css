@@ -66,7 +66,7 @@
   font-weight: 700;
 }
 
-/* Mobile bottom sheet — JS-driven --sheet-y for gesture + snap */
+/* Mobile bottom sheet | JS-driven --sheet-y for gesture + snap */
 @media (max-width: 640px) {
   .map-hint {
     display: none;
