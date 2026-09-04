@@ -7,83 +7,6 @@
   overflow-y: auto;
 }
 
-.panel-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px var(--space-md) 13px;
-  padding-top: 18px;
-  background: var(--color-primary);
-  color: white;
-  min-height: var(--hit-min);
-  position: relative;
-  touch-action: none;
-  cursor: grab;
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.panel-header:active {
-  cursor: grabbing;
-}
-
-.sheet-grabber {
-  display: none;
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 36px;
-  height: 4px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.35);
-  pointer-events: none;
-  z-index: 1;
-}
-
-.panel-header::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    180deg,
-    rgba(255, 255, 255, 0.06) 0%,
-    transparent 50%
-  );
-  pointer-events: none;
-}
-
-.panel-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  background: rgba(255, 255, 255, 0.12);
-  border-radius: var(--radius-sm);
-  color: white;
-  flex-shrink: 0;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
-}
-
-.panel-title {
-  font-size: 16px;
-  font-weight: 750;
-  color: white;
-  margin: 0;
-  letter-spacing: -0.02em;
-  line-height: 1.2;
-  text-wrap: balance;
-}
-
-.panel-subtitle {
-  font-size: 12px;
-  color: rgba(255, 255, 255, 0.72);
-  margin: 2px 0 0;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-}
-
 .panel-body {
   display: flex;
   flex-direction: column;
@@ -129,6 +52,70 @@
   cursor: pointer;
   min-height: 28px;
   position: relative;
+}
+
+.radius-options {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-sm);
+}
+
+/* Unit toggle: minutes of walking or meters walked.
+   Two equal columns so the sliding pill (::before) is exactly one column wide
+   and travels the same distance whichever label is active. */
+.unit-toggle {
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 2px;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  background: var(--color-surface-2);
+  flex-shrink: 0;
+}
+
+/* The pill. Slides between the two columns instead of the highlight jumping. */
+.unit-toggle::before {
+  content: "";
+  position: absolute;
+  z-index: 0;
+  top: 2px;
+  bottom: 2px;
+  left: 2px;
+  width: calc((100% - 4px) / 2);
+  border-radius: 999px;
+  background: var(--color-surface-elevated);
+  box-shadow: var(--shadow-sm);
+  transition: transform 220ms var(--ease-sheet);
+}
+
+.unit-toggle[data-active="minutes"]::before {
+  transform: translateX(100%);
+}
+
+.unit-option {
+  position: relative;
+  z-index: 1;
+  min-width: 40px;
+  padding: 3px 10px;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 600;
+  /* Same colour in both states: the sliding pill carries the selection, so the
+     label must not flip colour and pull the eye off the slide. */
+  color: var(--color-ink);
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .unit-toggle::before {
+    transition: none;
+  }
 }
 
 .radius-link-checkbox {
@@ -258,43 +245,7 @@
   }
 }
 
-.panel-toggle-chevron {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  margin-left: auto;
-  width: 32px;
-  height: 32px;
-  border-radius: var(--radius-xs);
-  background: rgba(255, 255, 255, 0.1);
-  flex-shrink: 0;
-  position: relative;
-}
-
-.panel-toggle-chevron::after {
-  content: "";
-  position: absolute;
-  inset: -6px;
-}
-
 @media (max-width: 640px) {
-  .panel-toggle-chevron {
-    display: flex;
-  }
-
-  .sheet-grabber {
-    display: block;
-  }
-
-  .panel-header {
-    cursor: grab;
-  }
-
-  .panel-header:active {
-    background: var(--color-primary-dark);
-    cursor: grabbing;
-  }
-
   .search-panel {
     overflow: visible;
     max-height: none;
@@ -476,5 +427,119 @@
 @media (prefers-reduced-motion: reduce) {
   .feedback {
     animation: none;
+  }
+}
+
+/* Save-search button + inline name form */
+.btn-icon {
+  min-height: var(--hit-min);
+  min-width: var(--hit-min);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  background: transparent;
+  color: var(--color-ink-secondary);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn-icon:hover:not(:disabled) {
+  background: var(--color-surface-2);
+  color: var(--color-ink);
+}
+
+.btn-icon:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+.btn-icon[aria-expanded="true"] {
+  background: var(--color-primary-light);
+  color: var(--color-primary);
+}
+
+.btn-icon.is-saved {
+  color: var(--color-origin);
+  background: var(--color-origin-soft);
+  box-shadow: none;
+  cursor: default;
+}
+
+.save-form {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 0 var(--space-md) var(--space-md);
+  margin-top: calc(-1 * var(--space-sm));
+  animation: feedback-in 180ms var(--ease-out) both;
+}
+
+.save-form-label {
+  font-size: 11px;
+  font-weight: 650;
+  color: var(--color-ink-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.save-form-row {
+  display: flex;
+  gap: var(--space-sm);
+}
+
+.save-form-input {
+  flex: 1;
+  min-width: 0;
+  min-height: var(--hit-min);
+  padding: 8px 12px;
+  border: none;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-elevated);
+  box-shadow: var(--shadow-sm);
+  /* ≥16px prevents iOS Safari input zoom */
+  font-size: 16px;
+  font-weight: 500;
+  font-family: inherit;
+  color: var(--color-ink);
+}
+
+.save-form-input::placeholder {
+  color: var(--color-ink-muted);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.save-form-input:focus {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.save-form-btn {
+  min-height: var(--hit-min);
+  padding: 0 var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--color-action);
+  color: white;
+  font-size: 14px;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.save-form-btn:hover:not(:disabled) {
+  background: var(--color-action-hover);
+}
+
+.save-form-btn:active:not(:disabled) {
+  transform: scale(0.96);
+}
+
+@media (max-width: 640px) {
+  .save-form {
+    padding: 0 12px 12px;
+    margin-top: 0;
+  }
+
+  .btn-icon {
+    padding: 0 10px;
   }
 }

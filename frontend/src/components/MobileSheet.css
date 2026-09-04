@@ -1,0 +1,139 @@
+/* ---- Closed state: persistent bar at the bottom edge ---- */
+.sheet-trigger {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  z-index: var(--z-panel);
+  box-sizing: border-box;
+  height: var(--sheet-peek);
+  padding-bottom: calc(13px + var(--safe-bottom));
+  border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
+  /* Second shadow is a skirt: a copy of the bar's own box shifted down, in
+     the bar colour. In an installed (standalone) PWA the strip below the bar
+     can otherwise show the page canvas as a pale band: the home-indicator
+     inset, and on launch a viewport that iOS lays out shorter than the
+     screen. The skirt is much taller than either, so the strip is painted
+     in the bar colour whatever its height. It sits below the viewport, so
+     it is invisible when there is no strip. */
+  box-shadow: var(--shadow-sheet), 0 var(--sheet-skirt) 0 0 var(--color-primary);
+  text-align: left;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transition-property: background;
+}
+
+.sheet-trigger:active {
+  background: var(--color-primary-dark);
+}
+
+.sheet-trigger:focus-visible {
+  box-shadow: var(--shadow-sheet), inset 0 0 0 2px white;
+}
+
+.sheet-grabber {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 36px;
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.35);
+  pointer-events: none;
+}
+
+.sheet-chevron,
+.sheet-close {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-xs);
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 1;
+}
+
+.sheet-close::after {
+  content: "";
+  position: absolute;
+  inset: -6px;
+}
+
+.sheet-close:hover {
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.sheet-close:focus-visible {
+  box-shadow: 0 0 0 2px white;
+}
+
+/* ---- Open state: the @magic-spells sheet ---- */
+.sheet-panel > dialog {
+  color: var(--color-ink);
+  font: inherit;
+}
+
+/* showModal() focuses the sheet element itself (tabindex="-1" autofocus), not
+   the close button. It is a container, so it never shows a ring. */
+.sheet-panel bottom-sheet:focus,
+.sheet-panel bottom-sheet:focus-visible {
+  outline: none;
+}
+
+/* The library draws the drag handle with ::before and marks the header as a drag surface.
+   Same height as the bar's title row, so the two coincide when the sheet rests. */
+.sheet-header {
+  box-sizing: border-box;
+  height: var(--sheet-bar-h);
+  z-index: 1;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  transition: box-shadow var(--bs-transition-duration) var(--bs-transition-timing);
+}
+
+/* Safe-area skirt. At rest the sheet shows its header plus a strip of content
+   the height of the safe area, where the bar is solid. A solid offset shadow
+   paints that strip in the bar colour over the content. It exists in every
+   state except shown, and the transition grows it during the close and
+   shrinks it during the open, in step with the slide. Zero on devices with
+   no bottom inset. */
+.sheet-panel:not([state='shown']) .sheet-header {
+  box-shadow: 0 var(--safe-bottom) 0 0 var(--color-primary);
+}
+
+.sheet-header:active {
+  cursor: grabbing;
+}
+
+.sheet-content {
+  background: var(--color-surface);
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-border) transparent;
+  /* Keeps the width stable while the scroller is switched off below */
+  scrollbar-gutter: stable;
+  /* Installed (standalone) PWA: the open sheet reaches the screen edge, where
+     the home indicator sits. Pad the scroller so the last row (the sticky
+     action bar, and any feedback below it) clears the safe area instead of
+     being cut off. Zero on devices with no bottom inset. */
+  padding-bottom: var(--safe-bottom);
+}
+
+/* While the dialog slides, the content must not be an async scroll layer:
+   iOS paints that layer a frame behind the sliding sheet, so the content
+   trails the header. `overflow: hidden` on both axes keeps the scroll
+   position and drops the layer for the length of the transition only.
+   `data-animating` is set by MobileSheet on beforeShow/beforeHide and
+   cleared on shown/hidden. */
+.sheet-panel[data-animating] .sheet-content {
+  overflow: hidden;
+}

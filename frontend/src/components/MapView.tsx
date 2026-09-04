@@ -5,13 +5,73 @@ import {
   Marker,
   Popup,
   Circle,
+  GeoJSON,
   Polyline,
   CircleMarker,
   useMapEvents,
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
-import type { LatLng, FoundRoute } from "../types.ts";
+import type { LatLng, FoundRoute, WalkArea, WalkUnit } from "../types.ts";
+import { formatWalk, estimatedRadiusMeters } from "../walk.ts";
+
+const COORD_EPSILON = 1e-6;
+
+function sameLatLng(a: LatLng, b: LatLng): boolean {
+  return (
+    Math.abs(a.lat - b.lat) < COORD_EPSILON &&
+    Math.abs(a.lng - b.lng) < COORD_EPSILON
+  );
+}
+
+interface WalkAreaLayerProps {
+  center: LatLng;
+  unit: WalkUnit;
+  budget: number;
+  /** Last search answer for this side. Used only when it matches center and minutes. */
+  area: WalkArea | null;
+  color: string;
+}
+
+/**
+ * The walk area around a point. After a search with a walk provider this is
+ * the real isochrone polygon. Before a search, or without a provider, it is a
+ * circle sized from the walk budget at 4.5 km/h.
+ */
+function WalkAreaLayer({ center, unit, budget, area, color }: WalkAreaLayerProps) {
+  const pathOptions = {
+    color,
+    fillColor: color,
+    fillOpacity: 0.1,
+    weight: 2,
+    opacity: 0.85,
+  };
+  const current =
+    area && area.unit === unit && area.budget === budget && sameLatLng(area.center, center)
+      ? area
+      : null;
+
+  if (current?.polygon) {
+    return (
+      <GeoJSON
+        key={`area-${center.lat}-${center.lng}-${unit}-${budget}`}
+        data={current.polygon}
+        style={pathOptions}
+        interactive={false}
+      />
+    );
+  }
+  const radius = current?.radiusMeters ?? estimatedRadiusMeters(unit, budget);
+  return (
+    <Circle
+      key={`circle-${center.lat}-${center.lng}-${radius}`}
+      center={[center.lat, center.lng]}
+      radius={radius}
+      pathOptions={pathOptions}
+      interactive={false}
+    />
+  );
+}
 
 const BA_CENTER: [number, number] = [-34.6037, -58.3816];
 const ZOOM = 13;
@@ -160,8 +220,11 @@ function RoutePolylines({ routes, selectedLine }: RoutePolylinesProps) {
 interface MapViewProps {
   origin: LatLng | null;
   destination: LatLng | null;
-  originRadius: number;
-  destRadius: number;
+  walkUnit: WalkUnit;
+  originBudget: number;
+  destBudget: number;
+  originArea: WalkArea | null;
+  destArea: WalkArea | null;
   routes: FoundRoute[];
   selectedLine: string | null;
   panelOpen: boolean;
@@ -171,8 +234,11 @@ interface MapViewProps {
 function MapView({
   origin,
   destination,
-  originRadius,
-  destRadius,
+  walkUnit,
+  originBudget,
+  destBudget,
+  originArea,
+  destArea,
   routes,
   selectedLine,
   panelOpen,
@@ -227,17 +293,12 @@ function MapView({
               {origin.lat.toFixed(5)}, {origin.lng.toFixed(5)}
             </Popup>
           </Marker>
-          <Circle
-            key={`origin-circle-${origin.lat}-${origin.lng}-${originRadius}`}
-            center={[origin.lat, origin.lng]}
-            radius={originRadius}
-            pathOptions={{
-              color: ORIGIN_COLOR,
-              fillColor: ORIGIN_COLOR,
-              fillOpacity: 0.1,
-              weight: 2,
-              opacity: 0.85,
-            }}
+          <WalkAreaLayer
+            center={origin}
+            unit={walkUnit}
+            budget={originBudget}
+            area={originArea}
+            color={ORIGIN_COLOR}
           />
         </>
       ) : null}
@@ -255,17 +316,12 @@ function MapView({
               {destination.lat.toFixed(5)}, {destination.lng.toFixed(5)}
             </Popup>
           </Marker>
-          <Circle
-            key={`dest-circle-${destination.lat}-${destination.lng}-${destRadius}`}
-            center={[destination.lat, destination.lng]}
-            radius={destRadius}
-            pathOptions={{
-              color: DEST_COLOR,
-              fillColor: DEST_COLOR,
-              fillOpacity: 0.1,
-              weight: 2,
-              opacity: 0.85,
-            }}
+          <WalkAreaLayer
+            center={destination}
+            unit={walkUnit}
+            budget={destBudget}
+            area={destArea}
+            color={DEST_COLOR}
           />
         </>
       ) : null}
@@ -289,7 +345,7 @@ function MapView({
           <Popup>
             {s.name}
             <br />
-            <small>Subida | a {s.walkMeters}m del origen</small>
+            <small>Subida | a {formatWalk(s)} del origen</small>
           </Popup>
         </CircleMarker>
       ))}
@@ -309,7 +365,7 @@ function MapView({
           <Popup>
             {s.name}
             <br />
-            <small>Bajada | a {s.walkMeters}m del destino</small>
+            <small>Bajada | a {formatWalk(s)} del destino</small>
           </Popup>
         </CircleMarker>
       ))}
@@ -332,7 +388,7 @@ function MapView({
               {selectedRoute.boardStop.name}
               <br />
               <small>
-                A {selectedRoute.boardStop.walkMeters}m de tu origen
+                A {formatWalk(selectedRoute.boardStop)} de tu origen
               </small>
             </Popup>
           </CircleMarker>
@@ -355,7 +411,7 @@ function MapView({
               {selectedRoute.alightStop.name}
               <br />
               <small>
-                A {selectedRoute.alightStop.walkMeters}m de tu destino
+                A {formatWalk(selectedRoute.alightStop)} de tu destino
               </small>
             </Popup>
           </CircleMarker>

@@ -1,9 +1,17 @@
-import React, { useReducer, useCallback, useEffect, useRef, lazy, Suspense } from 'react';
+import React, { useReducer, useCallback, lazy, Suspense } from 'react';
 import MapView from './components/MapView.tsx';
 import SearchPanel from './components/SearchPanel.tsx';
+import PanelBrand from './components/PanelBrand.tsx';
+import MobileSheet from './components/MobileSheet.tsx';
 import { useRouteSearch } from './hooks/useRouteSearch.ts';
-import { useBottomSheetGesture } from './hooks/useBottomSheetGesture.ts';
-import type { LatLng, Place } from './types.ts';
+import { useMediaQuery, MOBILE_MQ } from './hooks/useMediaQuery.ts';
+import { useSavedSearches } from './hooks/useSavedSearches.ts';
+import SavedSearches from './components/SavedSearches.tsx';
+import InstallPrompt from './components/InstallPrompt.tsx';
+import { findMatchingSearch, suggestName } from './storage/savedSearches.ts';
+import { loadWalkUnit, persistWalkUnit } from './storage/walkUnit.ts';
+import type { LatLng, Place, SavedSearch, WalkUnit } from './types.ts';
+import { WALK_LIMITS, convertBudget } from './walk.ts';
 import './App.css';
 
 const RouteResults = lazy(() => import('./components/RouteResults.tsx'));
@@ -17,9 +25,10 @@ interface AppState {
   destination: LatLng | null;
   originName: string;
   destName: string;
-  originRadius: number;
-  destRadius: number;
-  linkedRadius: boolean;
+  walkUnit: WalkUnit;
+  originBudget: number;
+  destBudget: number;
+  linkedWalk: boolean;
   selectedLine: string | null;
   panelOpen: boolean;
 }
@@ -30,26 +39,32 @@ type AppAction =
   | { type: 'CLEAR_ORIGIN' }
   | { type: 'CLEAR_DEST' }
   | { type: 'MAP_CLICK'; latlng: LatLng }
-  | { type: 'SET_ORIGIN_RADIUS'; value: number }
-  | { type: 'SET_DEST_RADIUS'; value: number }
-  | { type: 'TOGGLE_LINKED_RADIUS'; checked: boolean }
+  | { type: 'SET_WALK_UNIT'; unit: WalkUnit }
+  | { type: 'SET_ORIGIN_BUDGET'; value: number }
+  | { type: 'SET_DEST_BUDGET'; value: number }
+  | { type: 'TOGGLE_LINKED_WALK'; checked: boolean }
   | { type: 'SELECT_LINE'; line: string | null }
   | { type: 'CLEAR_SELECTED_LINE' }
   | { type: 'TOGGLE_PANEL' }
   | { type: 'SET_PANEL_OPEN'; open: boolean }
+  | { type: 'LOAD_SAVED'; saved: SavedSearch }
   | { type: 'RESET' };
 
-const initialAppState: AppState = {
-  origin: null,
-  destination: null,
-  originName: '',
-  destName: '',
-  originRadius: 600,
-  destRadius: 600,
-  linkedRadius: true,
-  selectedLine: null,
-  panelOpen: true,
-};
+/** Fresh state in the unit the user last picked (see storage/walkUnit). */
+function createInitialState(walkUnit: WalkUnit): AppState {
+  return {
+    origin: null,
+    destination: null,
+    originName: '',
+    destName: '',
+    walkUnit,
+    originBudget: WALK_LIMITS[walkUnit].default,
+    destBudget: WALK_LIMITS[walkUnit].default,
+    linkedWalk: true,
+    selectedLine: null,
+    panelOpen: true,
+  };
+}
 
 function appReducer(state: AppState, action: AppAction): AppState {
   switch (action.type) {
@@ -86,23 +101,32 @@ function appReducer(state: AppState, action: AppAction): AppState {
         selectedLine: null,
       };
     }
-    case 'SET_ORIGIN_RADIUS':
+    case 'SET_WALK_UNIT': {
+      if (action.unit === state.walkUnit) return state;
       return {
         ...state,
-        originRadius: action.value,
-        destRadius: state.linkedRadius ? action.value : state.destRadius,
+        walkUnit: action.unit,
+        originBudget: convertBudget(state.walkUnit, action.unit, state.originBudget),
+        destBudget: convertBudget(state.walkUnit, action.unit, state.destBudget),
       };
-    case 'SET_DEST_RADIUS':
+    }
+    case 'SET_ORIGIN_BUDGET':
       return {
         ...state,
-        destRadius: action.value,
-        originRadius: state.linkedRadius ? action.value : state.originRadius,
+        originBudget: action.value,
+        destBudget: state.linkedWalk ? action.value : state.destBudget,
       };
-    case 'TOGGLE_LINKED_RADIUS':
+    case 'SET_DEST_BUDGET':
       return {
         ...state,
-        linkedRadius: action.checked,
-        destRadius: action.checked ? state.originRadius : state.destRadius,
+        destBudget: action.value,
+        originBudget: state.linkedWalk ? action.value : state.originBudget,
+      };
+    case 'TOGGLE_LINKED_WALK':
+      return {
+        ...state,
+        linkedWalk: action.checked,
+        destBudget: action.checked ? state.originBudget : state.destBudget,
       };
     case 'SELECT_LINE':
       return { ...state, selectedLine: action.line, panelOpen: false };
@@ -112,53 +136,57 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, panelOpen: !state.panelOpen };
     case 'SET_PANEL_OPEN':
       return { ...state, panelOpen: action.open };
+    case 'LOAD_SAVED': {
+      const { saved } = action;
+      return {
+        ...state,
+        origin: { ...saved.origin },
+        originName: saved.originName,
+        destination: { ...saved.destination },
+        destName: saved.destName,
+        walkUnit: saved.unit,
+        originBudget: saved.originBudget,
+        destBudget: saved.destBudget,
+        linkedWalk: saved.linkedWalk,
+        selectedLine: null,
+        panelOpen: true,
+      };
+    }
     case 'RESET':
-      return { ...initialAppState };
+      return createInitialState(loadWalkUnit());
     default:
       return state;
   }
 }
 
 function App() {
-  const [state, dispatch] = useReducer(appReducer, initialAppState);
+  const [state, dispatch] = useReducer(appReducer, undefined, () => createInitialState(loadWalkUnit()));
   const {
     origin,
     destination,
     originName,
     destName,
-    originRadius,
-    destRadius,
-    linkedRadius,
+    walkUnit,
+    originBudget,
+    destBudget,
+    linkedWalk,
     selectedLine,
     panelOpen,
   } = state;
 
-  const panelRef = useRef<HTMLDivElement>(null);
+  const isMobile = useMediaQuery(MOBILE_MQ);
 
   const setPanelOpen = useCallback((open: boolean) => {
     dispatch({ type: 'SET_PANEL_OPEN', open });
   }, []);
-
-  useBottomSheetGesture(panelRef, {
-    open: panelOpen,
-    onOpenChange: setPanelOpen,
-  });
-
-  useEffect(() => {
-    if (!panelOpen && panelRef.current) {
-      panelRef.current.scrollTop = 0;
-      const active = document.activeElement;
-      if (active instanceof HTMLElement && panelRef.current.contains(active)) {
-        active.blur();
-      }
-    }
-  }, [panelOpen]);
 
   const {
     search,
     routes,
     originStops: _originStops,
     destStops: _destStops,
+    originArea,
+    destArea,
     suggestion,
     loading,
     error,
@@ -196,8 +224,8 @@ function App() {
   const handleSearch = useCallback(() => {
     if (!origin || !destination) return;
     dispatch({ type: 'CLEAR_SELECTED_LINE' });
-    search({ origin, destination, originRadius, destRadius });
-  }, [origin, destination, originRadius, destRadius, search]);
+    search({ origin, destination, unit: walkUnit, originBudget, destBudget });
+  }, [origin, destination, walkUnit, originBudget, destBudget, search]);
 
   const handleReset = useCallback(() => {
     dispatch({ type: 'RESET' });
@@ -208,26 +236,125 @@ function App() {
 
   const handleApplySuggestion = useCallback(() => {
     if (!suggestion) return;
-    // Update radii to the suggested values
-    dispatch({ type: 'SET_ORIGIN_RADIUS', value: suggestion.originRadius });
-    if (!linkedRadius) {
-      dispatch({ type: 'SET_DEST_RADIUS', value: suggestion.destRadius });
+    // Update walk budgets to the suggested values
+    dispatch({ type: 'SET_ORIGIN_BUDGET', value: suggestion.originBudget });
+    if (!linkedWalk) {
+      dispatch({ type: 'SET_DEST_BUDGET', value: suggestion.destBudget });
     }
-    // Trigger a new search with the new radii
+    // Trigger a new search with the new budgets
     if (origin && destination) {
       dispatch({ type: 'CLEAR_SELECTED_LINE' });
       search({
         origin,
         destination,
-        originRadius: suggestion.originRadius,
-        destRadius: linkedRadius ? suggestion.originRadius : suggestion.destRadius,
+        unit: suggestion.unit,
+        originBudget: suggestion.originBudget,
+        destBudget: linkedWalk ? suggestion.originBudget : suggestion.destBudget,
       });
     }
-  }, [suggestion, linkedRadius, origin, destination, search]);
+  }, [suggestion, linkedWalk, origin, destination, search]);
 
   const handleSelectLine = useCallback((line: string | null) => {
     dispatch({ type: 'SELECT_LINE', line });
   }, []);
+
+  const { searches: savedSearches, add: addSaved, rename: renameSaved, remove: removeSaved } =
+    useSavedSearches();
+
+  const canSave = Boolean(origin && destination);
+  const activeSaved =
+    origin && destination
+      ? findMatchingSearch(savedSearches, { origin, destination, unit: walkUnit, originBudget, destBudget })
+      : undefined;
+
+  const handleSaveSearch = useCallback(
+    (name: string) => {
+      if (!origin || !destination) return;
+      addSaved({
+        name,
+        origin,
+        originName,
+        destination,
+        destName,
+        unit: walkUnit,
+        originBudget,
+        destBudget,
+        linkedWalk,
+      });
+    },
+    [origin, destination, originName, destName, walkUnit, originBudget, destBudget, linkedWalk, addSaved],
+  );
+
+  const handleLoadSaved = useCallback(
+    (saved: SavedSearch) => {
+      dispatch({ type: 'LOAD_SAVED', saved });
+      search({
+        origin: saved.origin,
+        destination: saved.destination,
+        unit: saved.unit,
+        originBudget: saved.originBudget,
+        destBudget: saved.destBudget,
+      });
+    },
+    [search],
+  );
+
+  const panelContent = (
+    <>
+      <SearchPanel
+        originName={originName}
+        destName={destName}
+        walkUnit={walkUnit}
+        originBudget={originBudget}
+        destBudget={destBudget}
+        linkedWalk={linkedWalk}
+        onSetOrigin={handleSetOrigin}
+        onSetDest={handleSetDest}
+        onClearOrigin={handleClearOrigin}
+        onClearDest={handleClearDest}
+        onWalkUnitChange={(unit) => {
+          // Only an explicit pick in the toggle is a preference. A saved
+          // search that loads its own unit does not change it.
+          persistWalkUnit(unit);
+          dispatch({ type: 'SET_WALK_UNIT', unit });
+        }}
+        onOriginBudgetChange={(value) => dispatch({ type: 'SET_ORIGIN_BUDGET', value })}
+        onDestBudgetChange={(value) => dispatch({ type: 'SET_DEST_BUDGET', value })}
+        onLinkedWalkChange={(checked) => dispatch({ type: 'TOGGLE_LINKED_WALK', checked })}
+        onSearch={handleSearch}
+        onReset={handleReset}
+        loading={loading}
+        error={error}
+        routeCount={routeCount}
+        suggestion={suggestion}
+        onApplySuggestion={handleApplySuggestion}
+        canSave={canSave}
+        savedName={activeSaved?.name ?? null}
+        suggestedName={suggestName(originName, destName)}
+        onSave={handleSaveSearch}
+      />
+
+      <SavedSearches
+        searches={savedSearches}
+        activeId={activeSaved?.id ?? null}
+        onLoad={handleLoadSaved}
+        onRename={renameSaved}
+        onRemove={removeSaved}
+      />
+
+      {routes && routes.length > 0 ? (
+        <Suspense fallback={null}>
+          <RouteResults
+            routes={routes}
+            selectedLine={selectedLine}
+            onSelectLine={handleSelectLine}
+          />
+        </Suspense>
+      ) : null}
+
+      <InstallPrompt />
+    </>
+  );
 
   return (
     <div className="app">
@@ -235,8 +362,11 @@ function App() {
         <MapView
           origin={origin}
           destination={destination}
-          originRadius={originRadius}
-          destRadius={destRadius}
+          walkUnit={walkUnit}
+          originBudget={originBudget}
+          destBudget={destBudget}
+          originArea={originArea}
+          destArea={destArea}
           routes={routes || []}
           selectedLine={selectedLine}
           panelOpen={panelOpen}
@@ -244,41 +374,18 @@ function App() {
         />
       </div>
 
-      <div ref={panelRef} className={`panel-container${panelOpen ? ' panel-open' : ''}`}>
-        <SearchPanel
-          panelOpen={panelOpen}
-          onTogglePanel={() => dispatch({ type: 'SET_PANEL_OPEN', open: !panelOpen })}
-          originName={originName}
-          destName={destName}
-          originRadius={originRadius}
-          destRadius={destRadius}
-          linkedRadius={linkedRadius}
-          onSetOrigin={handleSetOrigin}
-          onSetDest={handleSetDest}
-          onClearOrigin={handleClearOrigin}
-          onClearDest={handleClearDest}
-          onOriginRadiusChange={(value) => dispatch({ type: 'SET_ORIGIN_RADIUS', value })}
-          onDestRadiusChange={(value) => dispatch({ type: 'SET_DEST_RADIUS', value })}
-          onLinkedRadiusChange={(checked) => dispatch({ type: 'TOGGLE_LINKED_RADIUS', checked })}
-          onSearch={handleSearch}
-          onReset={handleReset}
-          loading={loading}
-          error={error}
-          routeCount={routeCount}
-          suggestion={suggestion}
-          onApplySuggestion={handleApplySuggestion}
-        />
-
-        {routes && routes.length > 0 ? (
-          <Suspense fallback={null}>
-            <RouteResults
-              routes={routes}
-              selectedLine={selectedLine}
-              onSelectLine={handleSelectLine}
-            />
-          </Suspense>
-        ) : null}
-      </div>
+      {isMobile ? (
+        <MobileSheet open={panelOpen} onOpenChange={setPanelOpen}>
+          {panelContent}
+        </MobileSheet>
+      ) : (
+        <div className="panel-container">
+          <div className="panel-header">
+            <PanelBrand heading />
+          </div>
+          {panelContent}
+        </div>
+      )}
 
       {!origin ? (
         <div className="map-hint">

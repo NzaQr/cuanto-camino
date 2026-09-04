@@ -85,9 +85,36 @@
   /* Sheet / safe area */
   --safe-bottom: env(safe-area-inset-bottom, 0px);
   --safe-top: env(safe-area-inset-top, 0px);
-  --sheet-peek: calc(64px + var(--safe-bottom));
+  /* Height of the sheet header and of the closed bar's title row. Both are
+     fixed to it so the sheet, at rest, lands exactly on the bar. */
+  --sheet-bar-h: 68px;
+  --sheet-peek: calc(var(--sheet-bar-h) + var(--safe-bottom));
+  /* Solid strip painted below the closed bar, see .sheet-trigger. */
+  --sheet-skirt: 120px;
   --sheet-max: min(92dvh, 92svh);
   --panel-width: 380px;
+
+  /* @magic-spells/bottom-sheet | tokens read by the library stylesheet */
+  --bs-panel-background: var(--color-surface);
+  --bs-panel-max-height: var(--sheet-max);
+  --bs-panel-border-radius: var(--radius-sheet);
+  --bs-panel-box-shadow: var(--shadow-sheet);
+  --bs-handle-color: rgba(255, 255, 255, 0.35);
+  --bs-handle-width: 36px;
+  --bs-handle-height: 4px;
+  --bs-content-padding: 0px;
+  /* Solid skirt under the open sheet, in the sheet colour. iOS reveals the
+     area below the viewport on rubber-band and, in an installed PWA, on
+     launch, when the layout viewport is shorter than the screen. */
+  --bs-panel-bleed: 120px;
+  /* Hidden position. The library moves the dialog by 100% plus this offset.
+     A negative offset equal to the peek leaves the header resting on the
+     closed bar, so the close ends where the bar is instead of past it. */
+  --bs-panel-hidden-offset: calc(-1 * var(--sheet-peek));
+  --bs-transition-duration: 320ms;
+  --bs-transition-timing: var(--ease-sheet);
+  --bs-overlay-background: rgba(23, 23, 23, 0.35);
+  --bs-overlay-blur: 4px;
 
   /* Motion */
   --ease-out: cubic-bezier(0.2, 0, 0, 1);
@@ -136,6 +163,8 @@ button {
   font-family: inherit;
   font-size: inherit;
   border: none;
+  /* iOS paints a grey overlay on tap. Desktop shows none, so mobile shows none. */
+  -webkit-tap-highlight-color: transparent;
   border-radius: var(--radius-sm);
   transition-property: background, color, box-shadow, transform, opacity;
   transition-duration: 150ms;
@@ -156,6 +185,9 @@ input[type="range"] {
   width: 100%;
   accent-color: var(--color-primary);
   height: 28px;
+  /* A touch that starts on the slider belongs to the slider: no page or
+     sheet scroll, so a horizontal slide with vertical jitter still works. */
+  touch-action: none;
 }
 
 /* Leaflet: keep map under chrome WITHOUT flattening pane stack */
@@ -210,6 +242,17 @@ input[type="range"] {
   overflow: visible;
   filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.22))
     drop-shadow(0 4px 8px rgba(0, 0, 0, 0.14));
+}
+
+/* Installed (standalone) PWA. On launch iOS can lay the page out shorter
+   than the screen, and the strip below the viewport shows the page canvas
+   as a pale band under the dark bar. The canvas is painted in the bar
+   colour, so that strip reads as part of the bar. The body still covers the
+   viewport in paper, so nothing else changes. */
+@media (display-mode: standalone) {
+  html {
+    background: var(--color-primary);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

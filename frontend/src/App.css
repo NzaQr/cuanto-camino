@@ -14,6 +14,7 @@
   z-index: var(--z-map);
 }
 
+/* Desktop floating card | on mobile the panel lives in <MobileSheet> */
 .panel-container {
   position: absolute;
   top: var(--space-md);
@@ -66,7 +67,6 @@
   font-weight: 700;
 }
 
-/* Mobile bottom sheet | JS-driven --sheet-y for gesture + snap */
 @media (max-width: 640px) {
   .map-hint {
     display: none;
@@ -75,55 +75,5 @@
   .leaflet-top.leaflet-right {
     top: calc(10px + var(--safe-top));
     right: 10px;
-  }
-
-  .panel-container {
-    top: auto;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    max-height: none;
-    height: var(--sheet-max);
-    border-radius: var(--radius-sheet) var(--radius-sheet) 0 0;
-    box-shadow: var(--shadow-sheet);
-    padding-bottom: var(--safe-bottom);
-    overflow: hidden;
-    /* Matches initial panelOpen: true until gesture hook takes over with px */
-    --sheet-y: 0px;
-    transform: translate3d(0, var(--sheet-y), 0);
-    transition-property: transform;
-    transition-duration: 280ms;
-    transition-timing-function: var(--ease-sheet);
-    will-change: transform;
-    -webkit-overflow-scrolling: touch;
-    touch-action: pan-y;
-  }
-
-  .panel-container:not(.panel-open):not(.is-dragging):not(.sheet-gesture) {
-    --sheet-y: calc(100% - var(--sheet-peek));
-  }
-
-  .panel-container.panel-open {
-    overflow-y: auto;
-    overscroll-behavior: contain;
-  }
-
-  .panel-container.is-dragging {
-    transition: none;
-    touch-action: none;
-  }
-
-  .panel-container.sheet-animating {
-    transition-property: transform;
-    transition-duration: 320ms;
-    transition-timing-function: var(--ease-sheet);
-  }
-}
-
-@media (max-width: 640px) and (prefers-reduced-motion: reduce) {
-  .panel-container,
-  .panel-container.sheet-animating {
-    transition-duration: 0.01ms;
   }
 }

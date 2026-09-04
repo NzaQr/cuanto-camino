@@ -2,6 +2,7 @@ import React, { memo } from "react";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { WalkingIcon } from "@hugeicons/core-free-icons";
 import type { FoundRoute } from "../types.ts";
+import { formatWalk, formatWalkShort } from "../walk.ts";
 import "./RouteResults.css";
 
 interface RouteCardProps {
@@ -31,21 +32,21 @@ const RouteCard = memo(function RouteCard({
           <div className="stop-row">
             <span className="stop-dot origin" />
             <span className="stop-name">{route.boardStop.name}</span>
-            <span className="stop-walk">{route.boardStop.walkMeters}m</span>
+            <span className="stop-walk">{formatWalk(route.boardStop)}</span>
           </div>
           <div className="stop-connector" />
           <div className="stop-row">
             <span className="stop-dot dest" />
             <span className="stop-name">{route.alightStop.name}</span>
-            <span className="stop-walk">{route.alightStop.walkMeters}m</span>
+            <span className="stop-walk">{formatWalk(route.alightStop)}</span>
           </div>
         </div>
 
         <div className="route-walk-total">
           <HugeiconsIcon icon={WalkingIcon} size={12} color="currentColor" strokeWidth={1.75} className="walk-icon" />
           <span>
-            {route.boardStop.walkMeters}m al subir ·{" "}
-            {route.alightStop.walkMeters}m al bajar
+            {formatWalkShort(route.boardStop)} al subir ·{" "}
+            {formatWalkShort(route.alightStop)} al bajar
           </span>
         </div>
       </div>
