@@ -17,8 +17,11 @@ export const WALK_LIMITS = {
   minutes: { min: 1, max: 30, step: 1, default: 8 },
   meters: { min: 50, max: 2500, step: 50, default: 600 },
 };
-// Suggestion contours: the requested budget plus three larger steps.
-const CONTOUR_STEPS = [1, 1.25, 1.5, 2];
+// Suggestion contours: the requested budget plus larger steps, spaced evenly
+// up to a reach. The reach is twice the budget, but never less than
+// MIN_REACH, so a small budget still gets a useful suggestion.
+const CONTOUR_COUNT = 4;
+const MIN_REACH = { minutes: 15, meters: 1100 };
 
 function metersToLatDelta(m) {
   return m / METERS_PER_DEG_LAT;
@@ -58,15 +61,18 @@ function walkCostSeconds(stop) {
  * first, then larger steps used only to build a suggestion when nothing is
  * found. Values snap to the unit step so a suggestion is selectable.
  */
-export function contourPlan(unit, budget, maxContours = CONTOUR_STEPS.length) {
+export function contourPlan(unit, budget, maxContours = CONTOUR_COUNT) {
   const { min, max, step } = WALK_LIMITS[unit];
+  const count = Math.max(1, Math.min(CONTOUR_COUNT, maxContours));
+  const reach = Math.min(max, Math.max(budget * 2, MIN_REACH[unit]));
   const values = [];
-  for (const factor of CONTOUR_STEPS) {
-    const raw = Math.round((budget * factor) / step) * step;
-    const v = Math.min(max, Math.max(min, raw));
+  for (let i = 0; i < count; i++) {
+    const raw = budget + ((reach - budget) * i) / (count - 1 || 1);
+    const snapped = Math.round(raw / step) * step;
+    const v = Math.min(max, Math.max(min, snapped));
     if (!values.includes(v)) values.push(v);
   }
-  return values.slice(0, maxContours);
+  return values;
 }
 
 // Resolve real walking legs from a point to a set of stops (deduped by id).
@@ -102,10 +108,6 @@ export function createRouting(db, walk) {
     WHERE stop_lat BETWEEN ? AND ?
       AND stop_lon BETWEEN ? AND ?
   `);
-
-  const stopById = db.prepare(
-    "SELECT stop_id, stop_name, stop_lat, stop_lon FROM stops WHERE stop_id = ?",
-  );
 
   const shapePoints = db.prepare(`
     SELECT shape_pt_lat, shape_pt_lon
@@ -255,20 +257,20 @@ export function createRouting(db, walk) {
     const originIds = originStops.map((s) => s.stop_id);
     const destIds = destStops.map((s) => s.stop_id);
 
+    // Every valid board/alight pair per line. A pair is valid when both
+    // stops sit on the same trip and the alight stop comes after the board
+    // stop. The best pair per line is chosen below with real walk cost.
     const sql = `
       SELECT
         r.route_short_name AS line,
         r.route_long_name,
         r.route_desc,
         rs_o.shape_id,
-        rs_o.trip_id,
         rs_o.stop_id  AS board_stop_id,
         rs_d.stop_id  AS alight_stop_id
       ${ROUTE_JOIN}
       WHERE rs_o.stop_id IN (${placeholders(originIds)})
         AND rs_d.stop_id IN (${placeholders(destIds)})
-      GROUP BY r.route_short_name
-      LIMIT 300
     `;
 
     const rows = db.prepare(sql).all(...originIds, ...destIds);
@@ -281,60 +283,58 @@ export function createRouting(db, walk) {
       };
     }
 
-    const byLine = new Map();
-    for (const row of rows) {
-      if (!byLine.has(row.line)) byLine.set(row.line, row);
-    }
-
     const originStopMap = new Map(originStops.map((s) => [s.stop_id, s]));
     const destStopMap = new Map(destStops.map((s) => [s.stop_id, s]));
 
-    // Resolve stops first so the walk provider gets one deduped batch per side.
-    const resolved = [];
-    for (const [, row] of byLine) {
-      const boardStop =
-        originStopMap.get(row.board_stop_id) || stopById.get(row.board_stop_id);
-      const alightStop =
-        destStopMap.get(row.alight_stop_id) || stopById.get(row.alight_stop_id);
-      if (!boardStop || !alightStop) continue;
-      resolved.push({ row, boardStop, alightStop });
-    }
-
+    // Walk legs for every stop that takes part in a pair, one deduped batch
+    // per side, so the choice of pair uses real walk time when available.
     const [boardLegs, alightLegs] = await Promise.all([
-      walkLegsByStopId(walk, origin, resolved.map((r) => r.boardStop)),
-      walkLegsByStopId(walk, destination, resolved.map((r) => r.alightStop)),
+      walkLegsByStopId(
+        walk,
+        origin,
+        rows.map((r) => originStopMap.get(r.board_stop_id)).filter(Boolean),
+      ),
+      walkLegsByStopId(
+        walk,
+        destination,
+        rows.map((r) => destStopMap.get(r.alight_stop_id)).filter(Boolean),
+      ),
     ]);
 
+    function stopSummary(point, stop, leg) {
+      const straight = Math.round(
+        haversineMeters(point.lat, point.lng, stop.stop_lat, stop.stop_lon),
+      );
+      return toStopSummary(stop, straight, leg);
+    }
+
+    // Best pair per line: least total walking.
+    const byLine = new Map();
+    for (const row of rows) {
+      const boardStop = originStopMap.get(row.board_stop_id);
+      const alightStop = destStopMap.get(row.alight_stop_id);
+      if (!boardStop || !alightStop) continue;
+      const board = stopSummary(origin, boardStop, boardLegs.get(boardStop.stop_id));
+      const alight = stopSummary(destination, alightStop, alightLegs.get(alightStop.stop_id));
+      const cost = walkCostSeconds(board) + walkCostSeconds(alight);
+      const best = byLine.get(row.line);
+      if (!best || cost < best.cost) byLine.set(row.line, { row, board, alight, cost });
+    }
+
     const routes = [];
-    for (const { row, boardStop, alightStop } of resolved) {
+    for (const { row, board, alight } of byLine.values()) {
       const shape = row.shape_id
         ? shapePoints
             .all(row.shape_id)
             .map((p) => [p.shape_pt_lat, p.shape_pt_lon])
         : [];
 
-      const boardDist = Math.round(
-        haversineMeters(origin.lat, origin.lng, boardStop.stop_lat, boardStop.stop_lon),
-      );
-      const alightDist = Math.round(
-        haversineMeters(
-          destination.lat,
-          destination.lng,
-          alightStop.stop_lat,
-          alightStop.stop_lon,
-        ),
-      );
-
       routes.push({
         line: row.line,
         routeName: row.route_long_name || row.line,
         routeDesc: row.route_desc || "",
-        boardStop: toStopSummary(boardStop, boardDist, boardLegs.get(boardStop.stop_id)),
-        alightStop: toStopSummary(
-          alightStop,
-          alightDist,
-          alightLegs.get(alightStop.stop_id),
-        ),
+        boardStop: board,
+        alightStop: alight,
         shape,
       });
     }
