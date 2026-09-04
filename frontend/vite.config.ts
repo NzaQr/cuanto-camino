@@ -15,7 +15,7 @@ export default defineConfig({
         'favicon-32.png',
         'brand-icon.png',
         'apple-touch-icon.png',
-        'og-image.jpg',
+        'og-image-v2.jpg',
       ],
       manifest: {
         name: 'Cuánto Camino',
