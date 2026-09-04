@@ -10,7 +10,13 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['favicon-32.png', 'brand-icon.png', 'apple-touch-icon.png', 'og-image.jpg'],
+      includeAssets: [
+        'favicon.svg',
+        'favicon-32.png',
+        'brand-icon.png',
+        'apple-touch-icon.png',
+        'og-image.jpg',
+      ],
       manifest: {
         name: 'Cuánto Camino',
         short_name: 'Cuánto Camino',
