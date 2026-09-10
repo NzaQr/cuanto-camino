@@ -8,12 +8,16 @@ import {
   GeoJSON,
   Polyline,
   CircleMarker,
+  Pane,
   useMapEvents,
   useMap,
 } from "react-leaflet";
 import L from "leaflet";
 import type { LatLng, FoundRoute, WalkArea, WalkUnit } from "../types.ts";
 import { formatWalk, estimatedRadiusMeters } from "../walk.ts";
+import MapControls from "./MapControls.tsx";
+import { useUserLocation, UserLocationLayer } from "./UserLocation.tsx";
+import "./MapView.css";
 
 const COORD_EPSILON = 1e-6;
 
@@ -140,7 +144,13 @@ function MapLayoutSync({ panelOpen }: { panelOpen: boolean }) {
 
 const ORIGIN_COLOR = "#0d9488";
 const DEST_COLOR = "#e11d48";
-const ROUTE_COLOR = "#171717";
+/**
+ * The route line is drawn in its own pane with `mix-blend-mode: multiply`,
+ * so street names on the raster tiles stay readable through it. Multiply
+ * keeps dark text dark, but it also turns a near-black line into a mask, so
+ * the line needs a mid-tone colour.
+ */
+const ROUTE_COLOR = "#2563eb";
 
 function createColoredIcon(color: string): L.DivIcon {
   return L.divIcon({
@@ -156,16 +166,45 @@ const originIcon = createColoredIcon(ORIGIN_COLOR);
 const destIcon = createColoredIcon(DEST_COLOR);
 
 interface ClickHandlerProps {
+  /** With origin and destination set, a tap only pans the map. */
+  locked: boolean;
   onMapClick: (latlng: LatLng) => void;
 }
 
-function ClickHandler({ onMapClick }: ClickHandlerProps) {
+function ClickHandler({ locked, onMapClick }: ClickHandlerProps) {
   useMapEvents({
     click(e) {
+      if (locked) return;
+      // A click on a control that React removed on that same click
+      // reaches the map with a detached target. It is not a map tap.
+      const target = e.originalEvent.target as Node | null;
+      if (target && !target.isConnected) return;
       onMapClick(e.latlng);
     },
   });
   return null;
+}
+
+interface MapChromeProps {
+  pointsLocked: boolean;
+  onResetPoints: () => void;
+}
+
+/** Corner buttons plus the user's own position. Needs the map context. */
+function MapChrome({ pointsLocked, onResetPoints }: MapChromeProps) {
+  const { status, position, error, toggle } = useUserLocation();
+  return (
+    <>
+      <MapControls
+        locationStatus={status}
+        locationError={error}
+        onToggleLocation={toggle}
+        pointsLocked={pointsLocked}
+        onResetPoints={onResetPoints}
+      />
+      <UserLocationLayer position={position} />
+    </>
+  );
 }
 
 interface FitBoundsProps {
@@ -209,11 +248,14 @@ function RoutePolylines({ routes, selectedLine }: RoutePolylinesProps) {
     : null;
   if (!selected || selected.shape.length === 0) return null;
   return (
-    <Polyline
-      key={selected.line}
-      positions={selected.shape}
-      pathOptions={{ color: ROUTE_COLOR, weight: 5, opacity: 0.9 }}
-    />
+    <Pane name="route" style={{ zIndex: 390, mixBlendMode: "multiply" }}>
+      <Polyline
+        key={selected.line}
+        positions={selected.shape}
+        interactive={false}
+        pathOptions={{ color: ROUTE_COLOR, weight: 6, opacity: 0.85 }}
+      />
+    </Pane>
   );
 }
 
@@ -229,6 +271,7 @@ interface MapViewProps {
   selectedLine: string | null;
   panelOpen: boolean;
   onMapClick: (latlng: LatLng) => void;
+  onResetPoints: () => void;
 }
 
 function MapView({
@@ -243,7 +286,9 @@ function MapView({
   selectedLine,
   panelOpen,
   onMapClick,
+  onResetPoints,
 }: MapViewProps) {
+  const pointsLocked = Boolean(origin && destination);
   const hasRoutes = routes && routes.length > 0;
   const selectedRoute = hasRoutes
     ? (routes.find((r) => r.line === selectedLine) ?? null)
@@ -273,7 +318,8 @@ function MapView({
         attribution='&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>'
         url={tileUrl}
       />
-      <ClickHandler onMapClick={onMapClick} />
+      <ClickHandler locked={pointsLocked} onMapClick={onMapClick} />
+      <MapChrome pointsLocked={pointsLocked} onResetPoints={onResetPoints} />
       <FitBounds
         origin={origin}
         destination={destination}

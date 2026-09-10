@@ -1,0 +1,140 @@
+/* Map corner buttons | same size and surface as the zoom control */
+.map-controls-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.map-ctl-btn {
+  width: 40px;
+  height: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-elevated);
+  color: var(--color-ink);
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition:
+    background 120ms var(--ease-out),
+    color 120ms var(--ease-out),
+    transform 120ms var(--ease-out);
+}
+
+.map-ctl-btn:hover {
+  background: var(--color-surface-2);
+}
+
+.map-ctl-btn:active {
+  transform: scale(0.96);
+}
+
+.map-ctl-btn:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+.map-ctl-btn.is-active {
+  color: #2563eb;
+}
+
+.map-ctl-btn.is-busy {
+  color: var(--color-ink-muted);
+  animation: map-ctl-blink 1s ease-in-out infinite;
+}
+
+/* Icon only, quieter than the locate button */
+.map-ctl-btn--reset {
+  color: var(--color-ink-secondary);
+}
+
+.map-ctl-btn--reset:hover {
+  color: var(--color-ink);
+}
+
+.map-ctl-msg {
+  max-width: 220px;
+  padding: 8px 12px;
+  border-radius: var(--radius-sm);
+  background: rgba(23, 23, 23, 0.86);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 1.3;
+  box-shadow: var(--shadow-sm);
+}
+
+@keyframes map-ctl-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* The user's position | a blue dot with a soft pulse */
+.user-dot {
+  background: transparent !important;
+  border: none !important;
+}
+
+.user-dot-core,
+.user-dot-pulse {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.user-dot-core {
+  width: 16px;
+  height: 16px;
+  background: #2563eb;
+  border: 3px solid #fff;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+}
+
+.user-dot-pulse {
+  width: 16px;
+  height: 16px;
+  background: rgba(37, 99, 235, 0.35);
+  animation: user-dot-pulse 2.4s ease-out infinite;
+}
+
+@keyframes user-dot-pulse {
+  0% {
+    transform: translate(-50%, -50%) scale(1);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translate(-50%, -50%) scale(3.2);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .user-dot-pulse,
+  .map-ctl-btn.is-busy {
+    animation: none;
+  }
+}
+
+/* The bus model is projected in SVG. Its ground center stays at the GPS fix. */
+.user-bus {
+  background: transparent !important;
+  border: none !important;
+  pointer-events: none;
+}
+
+.user-bus-model {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}

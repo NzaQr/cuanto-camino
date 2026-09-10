@@ -38,6 +38,7 @@ type AppAction =
   | { type: 'SET_DEST'; place: Place }
   | { type: 'CLEAR_ORIGIN' }
   | { type: 'CLEAR_DEST' }
+  | { type: 'CLEAR_POINTS' }
   | { type: 'MAP_CLICK'; latlng: LatLng }
   | { type: 'SET_WALK_UNIT'; unit: WalkUnit }
   | { type: 'SET_ORIGIN_BUDGET'; value: number }
@@ -84,6 +85,15 @@ function appReducer(state: AppState, action: AppAction): AppState {
       return { ...state, origin: null, originName: '', selectedLine: null };
     case 'CLEAR_DEST':
       return { ...state, destination: null, destName: '', selectedLine: null };
+    case 'CLEAR_POINTS':
+      return {
+        ...state,
+        origin: null,
+        originName: '',
+        destination: null,
+        destName: '',
+        selectedLine: null,
+      };
     case 'MAP_CLICK': {
       const { latlng } = action;
       if (!state.origin) {
@@ -92,14 +102,9 @@ function appReducer(state: AppState, action: AppAction): AppState {
       if (!state.destination) {
         return { ...state, destination: latlng, destName: coordLabel(latlng) };
       }
-      return {
-        ...state,
-        origin: latlng,
-        originName: coordLabel(latlng),
-        destination: null,
-        destName: '',
-        selectedLine: null,
-      };
+      // Both points set: the map is locked. The user frees it with the
+      // reset button on the map or by clearing a field in the panel.
+      return state;
     }
     case 'SET_WALK_UNIT': {
       if (action.unit === state.walkUnit) return state;
@@ -211,15 +216,14 @@ function App() {
     resetSearch();
   }, [resetSearch]);
 
-  const handleMapClick = useCallback(
-    (latlng: LatLng) => {
-      if (origin && destination) {
-        resetSearch();
-      }
-      dispatch({ type: 'MAP_CLICK', latlng });
-    },
-    [origin, destination, resetSearch],
-  );
+  const handleMapClick = useCallback((latlng: LatLng) => {
+    dispatch({ type: 'MAP_CLICK', latlng });
+  }, []);
+
+  const handleResetPoints = useCallback(() => {
+    dispatch({ type: 'CLEAR_POINTS' });
+    resetSearch();
+  }, [resetSearch]);
 
   const handleSearch = useCallback(() => {
     if (!origin || !destination) return;
@@ -371,6 +375,7 @@ function App() {
           selectedLine={selectedLine}
           panelOpen={panelOpen}
           onMapClick={handleMapClick}
+          onResetPoints={handleResetPoints}
         />
       </div>
 
